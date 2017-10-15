@@ -66,10 +66,7 @@ class GomokuFrame(wx.Frame):
         self.draw_board()
         self.draw_chess()
         self.forward_button.Enable()
-        if self.current_move > 0:
-            x, y, player = self.chess_record[self.current_move - 1]
-            self.draw_current_chess(x, y)
-        else:
+        if self.current_move == 0:
             self.back_button.Disable()
             self.replay_button.Disable()
 
@@ -79,7 +76,6 @@ class GomokuFrame(wx.Frame):
         self.chess[x][y] = player
         self.draw_board()
         self.draw_chess()
-        self.draw_current_chess(x, y)
         self.back_button.Enable()
         self.replay_button.Enable()
         if self.current_move == self.move:
@@ -111,7 +107,6 @@ class GomokuFrame(wx.Frame):
         self.Show(True)
 
     def draw_board(self):
-
         dc = wx.ClientDC(self)
         dc.SetPen(wx.Pen(wx.WHITE))
         dc.SetBrush(wx.Brush(wx.WHITE))
@@ -137,15 +132,13 @@ class GomokuFrame(wx.Frame):
                     dc.SetBrush(wx.Brush(wx.BLACK if self.chess[i + 4][j + 4] == 1 else wx.WHITE))
                     dc.DrawCircle(self.grid_position_x + i * BLOCK_LENGTH, self.grid_position_y + j * BLOCK_LENGTH,
                                   self.piece_radius)
-
-    def draw_current_chess(self, x, y):
-        x = self.grid_position_x + (x - 4) * BLOCK_LENGTH
-        y = self.grid_position_y + (y - 4) * BLOCK_LENGTH
-        dc = wx.ClientDC(self)
-        dc.SetBrush(wx.Brush(wx.BLACK if self.current_move % 2 == 1 else wx.WHITE))
-        dc.DrawCircle(x, y, self.piece_radius)
-        dc.SetPen(wx.Pen(wx.WHITE if self.current_move % 2 == 1 else wx.BLACK))
-        dc.DrawCircle(x, y, self.inner_circle_radius)
+        if self.current_move > 0:
+            x, y, _ = self.chess_record[self.current_move - 1]
+            x = self.grid_position_x + (x - 4) * BLOCK_LENGTH
+            y = self.grid_position_y + (y - 4) * BLOCK_LENGTH
+            dc.SetBrush(wx.Brush(wx.BLACK if self.current_move % 2 == 1 == 1 else wx.WHITE))
+            dc.SetPen(wx.Pen(wx.WHITE if self.current_move % 2 == 1 else wx.BLACK))
+            dc.DrawCircle(x, y, self.inner_circle_radius)
 
     def draw_banner(self):
         banner_width = 300
@@ -183,7 +176,6 @@ class GomokuFrame(wx.Frame):
                         self.chess[x][y] = current_player
                         self.chess_record.append((x, y, current_player))
                         self.draw_chess()
-                        self.draw_current_chess(x, y)
                         if self.move > 8:
                             if self.check_winner(x, y):
                                 self.winner = current_player
