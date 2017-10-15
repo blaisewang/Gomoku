@@ -19,31 +19,22 @@ def main():
     line_list = []
     row_list = []
     column_list = []
+    chess = [[0 for _ in range(23)] for _ in range(23)]
     row_name_list = ['15', '14', '13', '12', '11', '10', ' 9', ' 8', ' 7', ' 6', ' 5', ' 4', ' 3', ' 2', ' 1']
     column_name_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P']
 
     winner = 0
-    banner_displayed = 0
     current_player = 1
-    current_chess = [[0 for _ in range(15)] for _ in range(15)]
+    banner_displayed = 0
 
-    def check_winner(player, x, y):
-        nonlocal winner
-        x += 4
-        y += 4
-        win = "11111" if player == 1 else "-1-1-1-1-1"
-        chess = [[0 for _ in range(23)] for _ in range(23)]
-        for i in range(15):
-            for j in range(15):
-                chess[i + 4][j + 4] = current_chess[i][j]
-        if win in "".join(map(str, [chess[i][y] for i in range(x - 4, x + 5)])) or win in "".join(
-                map(str, [chess[x][i] for i in range(y - 4, y + 5)])) or win in "".join(
-            map(str, [chess[x + i][y + i] for i in range(- 4, 5)])) or win in "".join(
-            map(str, [chess[x - i][y + i] for i in range(- 4, 5)])):
-            winner = player
+    def check_winner(x, y):
+        win = "11111" if current_player == 1 else "22222"
+        return win in "".join(map(str, [chess[i][y] for i in range(x - 4, x + 5)])) or win in "".join(
+            map(str, [chess[x][i] for i in range(y - 4, y + 5)])) or win in "".join(
+            map(str, [chess[x + i][y + i] for i in range(-4, 5)])) or win in "".join(
+            map(str, [chess[x - i][y + i] for i in range(-4, 5)]))
 
     class Frame(wx.Frame):
-
         def __init__(self, title, width, height):
             screen_width = wx.DisplaySize()[0]
             screen_height = wx.DisplaySize()[1]
@@ -84,18 +75,18 @@ def main():
             dc = wx.ClientDC(self)
             for i in range(15):
                 for j in range(15):
-                    if current_chess[i][j] != 0:
-                        dc.SetBrush(wx.Brush(wx.BLACK if current_chess[i][j] == 1 else wx.WHITE))
+                    if chess[i + 4][j + 4] != 0:
+                        dc.SetBrush(wx.Brush(wx.BLACK if chess[i + 4][j + 4] == 1 else wx.WHITE))
                         dc.DrawCircle(grid_position_x + i * block_length, grid_position_y + j * block_length,
                                       piece_radius)
 
-        def paint_current_chess(self, player, x, y):
-            x = grid_position_x + x * block_length
-            y = grid_position_y + y * block_length
+        def paint_current_chess(self, x, y):
+            x = grid_position_x + (x - 4) * block_length
+            y = grid_position_y + (y - 4) * block_length
             dc = wx.ClientDC(self)
-            dc.SetBrush(wx.Brush(wx.BLACK if player == 1 else wx.WHITE))
+            dc.SetBrush(wx.Brush(wx.BLACK if current_player == 1 else wx.WHITE))
             dc.DrawCircle(x, y, piece_radius)
-            dc.SetPen(wx.Pen(wx.WHITE if player == 1 else wx.BLACK))
+            dc.SetPen(wx.Pen(wx.WHITE if current_player == 1 else wx.BLACK))
             dc.DrawCircle(x, y, inner_circle_radius)
 
         def paint_winner(self):
@@ -111,24 +102,25 @@ def main():
             banner_displayed = 1
 
         def on_click(self, e):
-            nonlocal banner_displayed
+            nonlocal winner, banner_displayed
             if winner == 0:
                 nonlocal current_player
                 x, y = e.GetPosition()
                 x = x - grid_position_x + block_length / 2
                 y = y - grid_position_y + block_length / 2
                 if x > 0 and y > 0:
-                    x = int(x / block_length)
-                    y = int(y / block_length)
-                    if 0 <= x < 15 and 0 <= y < 15:
-                        if current_chess[x][y] == 0:
-                            current_chess[x][y] = current_player
-                            check_winner(current_player, x, y)
+                    x = int(x / block_length) + 4
+                    y = int(y / block_length) + 4
+                    if 4 <= x < 19 and 4 <= y < 19:
+                        if chess[x][y] == 0:
+                            chess[x][y] = current_player
                             self.paint_chess()
-                            self.paint_current_chess(current_player, x, y)
-                            current_player = -current_player
-                            if winner != 0:
+                            self.paint_current_chess(x, y)
+                            if check_winner(x, y):
                                 self.paint_winner()
+                                winner = current_player
+                            current_player = 1 if current_player == 2 else 2
+
             elif banner_displayed == 1:
                 self.ClearBackground()
                 self.paint_chess()
