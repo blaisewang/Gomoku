@@ -1,8 +1,10 @@
-from gomoku import user_interface
-
 import wx
 
+import ai
+import gomoku.user_interface
+
 if __name__ == '__main__':
-    app = wx.App(False)
-    user_interface.GomokuFrame()
-    app.MainLoop()
+    ai.self_training(1)
+    # app = wx.App(False)
+    # gomoku.user_interface.GomokuFrame()
+    # app.MainLoop()

@@ -1,11 +1,13 @@
+import pickle
+
 import ai.play
 
 moves = 0
-chess_record = []
+chess: [[]]
+chess_record: []
 weight_dictionary = {}
-black_key_record: [(str, (int, int))] = []
-white_key_record: [(str, (int, int))] = []
-chess = [[0 for _ in range(23)] for _ in range(23)]
+black_key_record: [(str, (int, int))]
+white_key_record: [(str, (int, int))]
 null_weight = [[0.0 for _ in range(15)] for _ in range(15)]
 
 
@@ -51,12 +53,43 @@ def get_initial_weight() -> [[]]:
 
 
 def self_training(times: int):
-    for _ in range(times + 1):
+    global moves, chess, chess_record, black_key_record, white_key_record, weight_dictionary
+
+    try:
+        training_file = open("training.data", "rb")
+        weight_dictionary = pickle.load(training_file)
+        training_file.close()
+    except IOError:
+        weight_dictionary = dict()
+
+    try:
+        times_file = open("times.data", "rb")
+        training_times = pickle.load(times_file)
+        times_file.close()
+    except IOError:
+        training_times = 0
+
+    for _ in range(times):
+        moves = 0
         winner = 0
+        chess_record = []
+        black_key_record = []
+        white_key_record = []
+        chess = [[0 for _ in range(23)] for _ in range(23)]
+        black_key_record = []
         while moves <= 255:
             x, y = play.next_move()
             add_move(x, y)
             if is_win(x, y):
                 winner = 2 if moves % 2 == 0 else 1
-                break
         play.update_weight(winner)
+
+    training_times += times
+    print("Has been trained", training_times, "times")
+
+    times_file = open("times.data", "wb")
+    pickle.dump(training_times, times_file)
+    times_file.close()
+    training_file = open("training.data", "wb")
+    pickle.dump(weight_dictionary, training_file)
+    training_file.close()

@@ -29,16 +29,25 @@ def next_move() -> (int, int):
 
 def update_weight(winner: int):
     penalty_factor = 0.1
+    reward_factor = 0.05
     if winner == 1:
         length = len(ai.white_key_record)
         for i in range(length):
             key, (x, y) = ai.white_key_record[length - i - 1]
             ai.weight_dictionary[key][x][y] -= bias_function(i)
+        length = len(ai.black_key_record)
+        for i in range(length):
+            key, (x, y) = ai.black_key_record[length - i - 1]
+            ai.weight_dictionary[key][x][y] += reward_factor * bias_function(i)
     elif winner == 2:
         length = len(ai.black_key_record)
         for i in range(length):
             key, (x, y) = ai.black_key_record[length - i - 1]
             ai.weight_dictionary[key][x][y] -= bias_function(i)
+        length = len(ai.white_key_record)
+        for i in range(length):
+            key, (x, y) = ai.white_key_record[length - i - 1]
+            ai.weight_dictionary[key][x][y] += reward_factor * bias_function(i)
     else:
         length = len(ai.white_key_record)
         for i in range(length):
