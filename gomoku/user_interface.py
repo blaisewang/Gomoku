@@ -1,9 +1,13 @@
 import wx
 
+import ai
+
 WIN_WIDTH = 1024
 WIN_HEIGHT = 720
 BLOCK_LENGTH = 42
 HEIGHT_OFFSET = 50
+BANNER_WIDTH = 300
+BANNER_HEIGHT = 100
 
 
 class GomokuFrame(wx.Frame):
@@ -50,13 +54,6 @@ class GomokuFrame(wx.Frame):
         self.forward_button.Disable()
         self.replay_button.Disable()
         self.init_user_interface()
-
-    def check_winner(self, x, y):
-        win = "11111" if self.move % 2 == 1 else "22222"
-        return win in "".join(map(str, [self.chess[i][y] for i in range(x - 4, x + 5)])) or win in "".join(
-            map(str, [self.chess[x][i] for i in range(y - 4, y + 5)])) or win in "".join(
-            map(str, [self.chess[x + i][y + i] for i in range(-4, 5)])) or win in "".join(
-            map(str, [self.chess[x - i][y + i] for i in range(-4, 5)]))
 
     def on_back_button_click(self, _):
         self.current_move -= 1
@@ -141,16 +138,25 @@ class GomokuFrame(wx.Frame):
             dc.DrawCircle(x, y, self.inner_circle_radius)
 
     def draw_banner(self):
-        banner_width = 300
-        banner_height = 100
         string = ("BLACK" if self.winner == 1 else "WHITE") + " WIN"
         dc = wx.ClientDC(self)
         dc.SetBrush(wx.Brush(wx.WHITE))
-        dc.DrawRectangle((WIN_WIDTH - banner_width) / 2, (WIN_HEIGHT - banner_height) / 2 - HEIGHT_OFFSET + 5,
-                         banner_width, banner_height)
+        dc.DrawRectangle((WIN_WIDTH - BANNER_WIDTH) / 2, (WIN_HEIGHT - BANNER_HEIGHT) / 2 - HEIGHT_OFFSET + 5,
+                         BANNER_WIDTH, BANNER_HEIGHT)
         dc.SetPen(wx.Pen(wx.BLACK))
         dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, False))
         dc.DrawText(string, (WIN_WIDTH - 216) / 2, (WIN_HEIGHT - 26) / 2 - HEIGHT_OFFSET)
+        self.is_banner_displayed = True
+
+    def draw_draw_banner(self):
+        string = "DRAW"
+        dc = wx.ClientDC(self)
+        dc.SetBrush(wx.Brush(wx.WHITE))
+        dc.DrawRectangle((WIN_WIDTH - BANNER_WIDTH) / 2, (WIN_HEIGHT - BANNER_HEIGHT) / 2 - HEIGHT_OFFSET + 5,
+                         BANNER_WIDTH, BANNER_HEIGHT)
+        dc.SetPen(wx.Pen(wx.BLACK))
+        dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, False))
+        dc.DrawText(string, (WIN_WIDTH - 97) / 2, (WIN_HEIGHT - 26) / 2 - HEIGHT_OFFSET)
         self.is_banner_displayed = True
 
     def on_click(self, e):
@@ -175,11 +181,15 @@ class GomokuFrame(wx.Frame):
                         current_player = 1 if self.move % 2 == 1 else 2
                         self.chess[x][y] = current_player
                         self.chess_record.append((x, y, current_player))
+                        # ai.add_move(x, y)
                         self.draw_chess()
                         if self.move > 8:
-                            if self.check_winner(x, y):
+                            if ai.is_win(x, y):
                                 self.winner = current_player
                                 self.draw_banner()
+                            else:
+                                if self.move == 255:
+                                    self.draw_draw_banner()
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()
