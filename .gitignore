@@ -99,5 +99,5 @@ ENV/
 
 # mypy
 .mypy_cache/
-/training.data
-/times.data
+*.data
+

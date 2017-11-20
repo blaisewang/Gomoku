@@ -47,9 +47,11 @@ class GomokuFrame(wx.Frame):
         self.back_button = wx.Button(self, label="Back", pos=(14, self.grid_position_y), size=(72, 32))
         self.forward_button = wx.Button(self, label="Forward", pos=(92, self.grid_position_y), size=(72, 32))
         self.replay_button = wx.Button(self, label="Replay", pos=(14, self.grid_position_y + 45), size=(150, 32))
+        self.self_play_button = wx.Button(self, label="Self-play", pos=(14, self.grid_position_y + 90), size=(150, 32))
         self.back_button.SetFont(button_font)
         self.forward_button.SetFont(button_font)
         self.replay_button.SetFont(button_font)
+        self.self_play_button.SetFont(button_font)
         self.back_button.Disable()
         self.forward_button.Disable()
         self.replay_button.Disable()
@@ -58,8 +60,9 @@ class GomokuFrame(wx.Frame):
     def on_back_button_click(self, _):
         self.current_move -= 1
         self.winner = 0
-        x, y, _ = self.chess_record[self.current_move]
+        x, y = self.chess_record[self.current_move]
         self.chess[x][y] = 0
+        ai.remove_move(x, y)
         self.draw_board()
         self.draw_chess()
         self.forward_button.Enable()
@@ -68,9 +71,10 @@ class GomokuFrame(wx.Frame):
             self.replay_button.Disable()
 
     def on_forward_button_click(self, _):
+        x, y = self.chess_record[self.current_move]
         self.current_move += 1
-        x, y, player = self.chess_record[self.current_move - 1]
-        self.chess[x][y] = player
+        self.chess[x][y] = 2 if self.current_move % 2 == 0 else 1
+        ai.add_move(x, y)
         self.draw_board()
         self.draw_chess()
         self.back_button.Enable()
@@ -79,6 +83,8 @@ class GomokuFrame(wx.Frame):
             self.forward_button.Disable()
 
     def on_replay_button_click(self, _):
+        ai.initialize()
+        ai.load_weight_dictionary()
         self.move = 0
         self.current_move = 0
         self.winner = 0
@@ -86,7 +92,16 @@ class GomokuFrame(wx.Frame):
         self.chess_record.clear()
         self.draw_board()
         self.back_button.Disable()
+        self.forward_button.Disable()
         self.replay_button.Disable()
+        self.self_play_button.Enable()
+
+    def on_self_play_button_click(self, _):
+        x, y = ai.play.next_move()
+        ai.add_move(x, y)
+        self.draw_move(x, y)
+        if self.move == 255 or self.winner != 0:
+            self.self_play_button.Disable()
 
     def on_paint(self, _):
         dc = wx.PaintDC(self)
@@ -100,8 +115,10 @@ class GomokuFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_back_button_click, self.back_button)
         self.Bind(wx.EVT_BUTTON, self.on_forward_button_click, self.forward_button)
         self.Bind(wx.EVT_BUTTON, self.on_replay_button_click, self.replay_button)
+        self.Bind(wx.EVT_BUTTON, self.on_self_play_button_click, self.self_play_button)
         self.Centre()
         self.Show(True)
+        ai.load_weight_dictionary()
 
     def draw_board(self):
         dc = wx.ClientDC(self)
@@ -130,7 +147,7 @@ class GomokuFrame(wx.Frame):
                     dc.DrawCircle(self.grid_position_x + i * BLOCK_LENGTH, self.grid_position_y + j * BLOCK_LENGTH,
                                   self.piece_radius)
         if self.current_move > 0:
-            x, y, _ = self.chess_record[self.current_move - 1]
+            x, y = self.chess_record[self.current_move - 1]
             x = self.grid_position_x + (x - 4) * BLOCK_LENGTH
             y = self.grid_position_y + (y - 4) * BLOCK_LENGTH
             dc.SetBrush(wx.Brush(wx.BLACK if self.current_move % 2 == 1 == 1 else wx.WHITE))
@@ -159,6 +176,29 @@ class GomokuFrame(wx.Frame):
         dc.DrawText(string, (WIN_WIDTH - 97) / 2, (WIN_HEIGHT - 26) / 2 - HEIGHT_OFFSET)
         self.is_banner_displayed = True
 
+    def draw_move(self, x, y):
+        if self.chess[x][y] == 0:
+            if self.current_move == 0:
+                self.back_button.Enable()
+                self.replay_button.Enable()
+            if self.current_move != self.move:
+                for i in range(self.current_move, self.move):
+                    self.chess_record.pop()
+                self.forward_button.Disable()
+            self.current_move += 1
+            self.move = self.current_move
+            current_player = 1 if self.move % 2 == 1 else 2
+            self.chess[x][y] = current_player
+            self.chess_record.append((x, y))
+            self.draw_chess()
+            if self.move > 8:
+                if ai.is_win(x, y):
+                    self.winner = current_player
+                    self.draw_banner()
+                else:
+                    if self.move == 255:
+                        self.draw_draw_banner()
+
     def on_click(self, e):
         if self.winner == 0:
             x, y = e.GetPosition()
@@ -168,28 +208,8 @@ class GomokuFrame(wx.Frame):
                 x = int(x / BLOCK_LENGTH) + 4
                 y = int(y / BLOCK_LENGTH) + 4
                 if 4 <= x < 19 and 4 <= y < 19:
-                    if self.chess[x][y] == 0:
-                        if self.current_move == 0:
-                            self.back_button.Enable()
-                            self.replay_button.Enable()
-                        if self.current_move != self.move:
-                            for i in range(self.current_move, self.move):
-                                self.chess_record.pop()
-                            self.forward_button.Disable()
-                        self.current_move += 1
-                        self.move = self.current_move
-                        current_player = 1 if self.move % 2 == 1 else 2
-                        self.chess[x][y] = current_player
-                        self.chess_record.append((x, y, current_player))
-                        # ai.add_move(x, y)
-                        self.draw_chess()
-                        if self.move > 8:
-                            if ai.is_win(x, y):
-                                self.winner = current_player
-                                self.draw_banner()
-                            else:
-                                if self.move == 255:
-                                    self.draw_draw_banner()
+                    ai.add_move(x, y)
+                    self.draw_move(x, y)
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()
