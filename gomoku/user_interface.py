@@ -47,11 +47,11 @@ class GomokuFrame(wx.Frame):
         self.back_button = wx.Button(self, label="Back", pos=(14, self.grid_position_y), size=(72, 32))
         self.forward_button = wx.Button(self, label="Forward", pos=(92, self.grid_position_y), size=(72, 32))
         self.replay_button = wx.Button(self, label="Replay", pos=(14, self.grid_position_y + 45), size=(150, 32))
-        self.self_play_button = wx.Button(self, label="Self-play", pos=(14, self.grid_position_y + 90), size=(150, 32))
+        self.ai_button = wx.Button(self, label="AI-play", pos=(14, self.grid_position_y + 90), size=(150, 32))
         self.back_button.SetFont(button_font)
         self.forward_button.SetFont(button_font)
         self.replay_button.SetFont(button_font)
-        self.self_play_button.SetFont(button_font)
+        self.ai_button.SetFont(button_font)
         self.back_button.Disable()
         self.forward_button.Disable()
         self.replay_button.Disable()
@@ -94,14 +94,14 @@ class GomokuFrame(wx.Frame):
         self.back_button.Disable()
         self.forward_button.Disable()
         self.replay_button.Disable()
-        self.self_play_button.Enable()
+        self.ai_button.Enable()
 
-    def on_self_play_button_click(self, _):
+    def on_ai_play_button_click(self, _):
         x, y = ai.play.next_move()
         ai.add_move(x, y)
         self.draw_move(x, y)
         if self.move == 255 or self.winner != 0:
-            self.self_play_button.Disable()
+            self.ai_button.Disable()
 
     def on_paint(self, _):
         dc = wx.PaintDC(self)
@@ -115,7 +115,7 @@ class GomokuFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_back_button_click, self.back_button)
         self.Bind(wx.EVT_BUTTON, self.on_forward_button_click, self.forward_button)
         self.Bind(wx.EVT_BUTTON, self.on_replay_button_click, self.replay_button)
-        self.Bind(wx.EVT_BUTTON, self.on_self_play_button_click, self.self_play_button)
+        self.Bind(wx.EVT_BUTTON, self.on_ai_play_button_click, self.ai_button)
         self.Centre()
         self.Show(True)
         ai.load_weight_dictionary()
