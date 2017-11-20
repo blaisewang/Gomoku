@@ -1,3 +1,4 @@
+import os.path
 import pickle
 import time
 
@@ -8,6 +9,9 @@ chess = [[0 for _ in range(23)] for _ in range(23)]
 weight_dictionary = {}
 black_key_record: [(str, (int, int))] = []
 white_key_record: [(str, (int, int))] = []
+
+file_path = "training.data"
+max_bytes = 2 ** 31 - 1
 
 
 def initialize():
@@ -79,9 +83,12 @@ def get_initial_weight() -> [[]]:
 def load_weight_dictionary():
     global weight_dictionary
     try:
-        training_file = open("training.data", "rb")
-        weight_dictionary = pickle.load(training_file)
-        training_file.close()
+        bytes_in = bytearray(0)
+        input_size = os.path.getsize(file_path)
+        with open(file_path, 'rb') as file_in:
+            for _ in range(0, input_size, max_bytes):
+                bytes_in += file_in.read(max_bytes)
+        weight_dictionary = pickle.loads(bytes_in)
     except IOError:
         weight_dictionary = dict()
 
@@ -116,6 +123,7 @@ def self_training(times: int):
     times_file = open("times.data", "wb")
     pickle.dump(training_times, times_file)
     times_file.close()
-    training_file = open("training.data", "wb")
-    pickle.dump(weight_dictionary, training_file)
-    training_file.close()
+    bytes_out = pickle.dumps(weight_dictionary)
+    with open(file_path, 'wb') as file_out:
+        for i in range(0, len(bytes_out), max_bytes):
+            file_out.write(bytes_out[i:i + max_bytes])

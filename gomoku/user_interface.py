@@ -65,6 +65,7 @@ class GomokuFrame(wx.Frame):
         ai.remove_move(x, y)
         self.draw_board()
         self.draw_chess()
+        self.ai_button.Enable()
         self.forward_button.Enable()
         if self.current_move == 0:
             self.back_button.Disable()
@@ -81,6 +82,8 @@ class GomokuFrame(wx.Frame):
         self.replay_button.Enable()
         if self.current_move == self.move:
             self.forward_button.Disable()
+        if self.current_move == 255:
+            self.ai_button.Disable()
 
     def on_replay_button_click(self, _):
         ai.initialize()
