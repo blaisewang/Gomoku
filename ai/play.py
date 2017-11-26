@@ -1,8 +1,8 @@
-import ai
-
 import math
 import numpy
 import random
+
+import ai
 
 
 def next_move() -> (int, int):

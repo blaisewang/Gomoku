@@ -1,6 +1,7 @@
 import wx
 
 import ai
+import ai.debug
 
 WIN_WIDTH = 1024
 WIN_HEIGHT = 720
@@ -195,7 +196,7 @@ class GomokuFrame(wx.Frame):
             self.chess_record.append((x, y))
             self.draw_chess()
             if self.move > 8:
-                if ai.is_win(x, y):
+                if ai.has_winner(x, y):
                     self.winner = current_player
                     self.draw_banner()
                 else:
