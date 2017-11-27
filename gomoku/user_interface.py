@@ -1,3 +1,5 @@
+import threading
+
 import wx
 
 import ai
@@ -88,7 +90,6 @@ class GomokuFrame(wx.Frame):
 
     def on_replay_button_click(self, _):
         ai.initialize()
-        ai.load_weight_dictionary()
         self.move = 0
         self.current_move = 0
         self.winner = 0
@@ -101,11 +102,12 @@ class GomokuFrame(wx.Frame):
         self.ai_button.Enable()
 
     def on_ai_play_button_click(self, _):
-        x, y = ai.play.next_move()
-        ai.add_move(x, y)
-        self.draw_move(x, y)
-        if self.move == 255 or self.winner != 0:
-            self.ai_button.Disable()
+        # x, y = ai.play.next_move()
+        # ai.add_move(x, y)
+        # self.draw_move(x, y)
+        # if self.move == 255 or self.winner != 0:
+        #     self.ai_button.Disable()
+        pass
 
     def on_paint(self, _):
         dc = wx.PaintDC(self)
@@ -122,7 +124,6 @@ class GomokuFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_ai_play_button_click, self.ai_button)
         self.Centre()
         self.Show(True)
-        ai.load_weight_dictionary()
 
     def draw_board(self):
         dc = wx.ClientDC(self)
@@ -204,6 +205,11 @@ class GomokuFrame(wx.Frame):
                     if self.move == 255:
                         self.draw_draw_banner()
 
+    def add_move(self, args):
+        x, y = args
+        ai.add_move(x, y)
+        wx.CallAfter(self.draw_move, x, y)
+
     def on_click(self, e):
         if self.winner == 0:
             x, y = e.GetPosition()
@@ -213,8 +219,10 @@ class GomokuFrame(wx.Frame):
                 x = int(x / BLOCK_LENGTH) + 4
                 y = int(y / BLOCK_LENGTH) + 4
                 if 4 <= x < 19 and 4 <= y < 19:
-                    ai.add_move(x, y)
-                    self.draw_move(x, y)
+                    if self.chess[x][y] == 0:
+                        thread = threading.Thread(target=self.add_move, args=((x, y),))
+                        thread.setDaemon(True)
+                        thread.start()
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()
