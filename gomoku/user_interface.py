@@ -195,6 +195,7 @@ class GomokuFrame(wx.Frame):
             self.chess[x][y] = current_player
             self.chess_record.append((x, y))
             self.draw_chess()
+            ai.debug.pattern_match_debug(x, y)
             if self.move > 8:
                 if ai.has_winner(x, y):
                     self.winner = current_player

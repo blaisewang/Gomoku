@@ -5,7 +5,7 @@ import time
 import ai.play
 import ai.evaluate
 
-moves = 0
+moves: int = 0
 chess = [[-2 for _ in range(23)] for _ in range(23)]
 for row in range(4, 19):
     for column in range(4, 19):
@@ -99,7 +99,7 @@ def load_weight_dictionary():
         weight_dictionary = dict()
 
 
-def self_training(times: int):
+def self_play_training(times: int):
     load_weight_dictionary()
     try:
         times_file = open("times.data", "rb")
