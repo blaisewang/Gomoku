@@ -24,11 +24,10 @@ class GomokuFrame(wx.Frame):
     row_list = []
     column_list = []
     chess_record = []
-    chess = [[0 for _ in range(23)] for _ in range(23)]
     row_name_list = ['15', '14', '13', '12', '11', '10', ' 9', ' 8', ' 7', ' 6', ' 5', ' 4', ' 3', ' 2', ' 1']
     column_name_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P']
 
-    move = 0
+    moves = 0
     current_move = 0
     winner = 0
     is_banner_displayed = False
@@ -64,7 +63,6 @@ class GomokuFrame(wx.Frame):
         self.current_move -= 1
         self.winner = 0
         x, y = self.chess_record[self.current_move]
-        self.chess[x][y] = 0
         ai.remove_move(x, y)
         self.draw_board()
         self.draw_chess()
@@ -77,23 +75,21 @@ class GomokuFrame(wx.Frame):
     def on_forward_button_click(self, _):
         x, y = self.chess_record[self.current_move]
         self.current_move += 1
-        self.chess[x][y] = 2 if self.current_move % 2 == 0 else 1
         ai.add_move(x, y)
         self.draw_board()
         self.draw_chess()
         self.back_button.Enable()
         self.replay_button.Enable()
-        if self.current_move == self.move:
+        if self.current_move == self.moves:
             self.forward_button.Disable()
         if self.current_move == 255:
             self.ai_button.Disable()
 
     def on_replay_button_click(self, _):
         ai.initialize()
-        self.move = 0
+        self.moves = 0
         self.current_move = 0
         self.winner = 0
-        self.chess = [[0 for _ in range(23)] for _ in range(23)]
         self.chess_record.clear()
         self.draw_board()
         self.back_button.Disable()
@@ -147,8 +143,8 @@ class GomokuFrame(wx.Frame):
         dc = wx.ClientDC(self)
         for i in range(15):
             for j in range(15):
-                if self.chess[i + 4][j + 4]:
-                    dc.SetBrush(wx.Brush(wx.BLACK if self.chess[i + 4][j + 4] == 1 else wx.WHITE))
+                if ai.chess[j + 4][i + 4]:
+                    dc.SetBrush(wx.Brush(wx.BLACK if ai.chess[j + 4][i + 4] == 1 else wx.WHITE))
                     dc.DrawCircle(self.grid_position_x + i * BLOCK_LENGTH, self.grid_position_y + j * BLOCK_LENGTH,
                                   self.piece_radius)
         if self.current_move > 0:
@@ -182,28 +178,26 @@ class GomokuFrame(wx.Frame):
         self.is_banner_displayed = True
 
     def draw_move(self, x, y):
-        if self.chess[x][y] == 0:
-            if self.current_move == 0:
-                self.back_button.Enable()
-                self.replay_button.Enable()
-            if self.current_move != self.move:
-                for i in range(self.current_move, self.move):
-                    self.chess_record.pop()
-                self.forward_button.Disable()
-            self.current_move += 1
-            self.move = self.current_move
-            current_player = 1 if self.move % 2 == 1 else 2
-            self.chess[x][y] = current_player
-            self.chess_record.append((x, y))
-            self.draw_chess()
-            ai.debug.pattern_match_debug(x, y)
-            if self.move > 8:
-                if ai.has_winner(x, y):
-                    self.winner = current_player
-                    self.draw_banner()
-                else:
-                    if self.move == 255:
-                        self.draw_draw_banner()
+        if self.current_move == 0:
+            self.back_button.Enable()
+            self.replay_button.Enable()
+        if self.current_move != self.moves:
+            for i in range(self.current_move, self.moves):
+                self.chess_record.pop()
+            self.forward_button.Disable()
+        self.current_move += 1
+        self.moves = self.current_move
+        current_player = 1 if self.moves % 2 == 1 else 2
+        self.chess_record.append((x, y))
+        self.draw_chess()
+        ai.debug.pattern_match_debug(x, y)
+        if self.moves > 8:
+            if ai.has_winner(x, y):
+                self.winner = current_player
+                self.draw_banner()
+            else:
+                if self.moves == 255:
+                    self.draw_draw_banner()
 
     def add_move(self, args):
         x, y = args
@@ -219,7 +213,7 @@ class GomokuFrame(wx.Frame):
                 x = int(x / BLOCK_LENGTH) + 4
                 y = int(y / BLOCK_LENGTH) + 4
                 if 4 <= x < 19 and 4 <= y < 19:
-                    if self.chess[x][y] == 0:
+                    if ai.chess[y][x] == 0:
                         thread = threading.Thread(target=self.add_move, args=((x, y),))
                         thread.setDaemon(True)
                         thread.start()

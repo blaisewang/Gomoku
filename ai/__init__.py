@@ -32,7 +32,6 @@ def initialize():
 def add_move(y: int, x: int):
     global moves
     moves += 1
-    print(moves)
     player = 2 if moves % 2 == 0 else 1
     chess[x][y] = player
     key = get_chess_key()
@@ -41,10 +40,10 @@ def add_move(y: int, x: int):
             black_key_record.append((key, (x - 4, y - 4)))
         else:
             white_key_record.append((key, (x - 4, y - 4)))
-    # if len(ai.weight_dictionary) == 0:
-    #     initial_weight_dictionary()
-    #     weight_dictionary[key] = get_boundary()
-    # weight_dictionary[key] = get_boundary()
+            # if len(ai.weight_dictionary) == 0:
+            #     initial_weight_dictionary()
+            #     weight_dictionary[key] = get_boundary()
+            # weight_dictionary[key] = get_boundary()
 
 
 def remove_move(y: int, x: int):
@@ -83,7 +82,6 @@ def get_boundary() -> [[]]:
                                 chess[i + 1][j + 1] == 1 or chess[i + 1][j + 1] == 2):
                     boundary[i - 4][j - 4] = 1.0
     return boundary
-
 
 # def load_weight_dictionary():
 #     global weight_dictionary
