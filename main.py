@@ -2,7 +2,11 @@ import wx
 
 import gomoku.user_interface
 
-if __name__ == '__main__':
+
+def main():
     app = wx.App(False)
     gomoku.user_interface.GomokuFrame()
     app.MainLoop()
+
+
+main()
