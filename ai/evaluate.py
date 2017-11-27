@@ -38,18 +38,6 @@ def evaluation(x: int, y: int) -> int:
           [-1, -1, -1, 0, -1]], 3, 3),
 
         ([[-1, 0, -1, -1, -1],
-          [-1, player, - 1, -1, -1],
-          [-1, player, - 1, -1, -1],
-          [0, player, player, player, 0],
-          [-1, 0, -1, -1, -1]], 3, 1),
-
-        ([[-1, -1, -1, 0, -1],
-          [0, player, player, player, 0],
-          [-1, -1, -1, player, -1],
-          [-1, -1, -1, player, -1],
-          [-1, -1, -1, 0, -1]], 1, 3),
-
-        ([[-1, 0, -1, -1, -1],
           [0, player, player, player, 0],
           [-1, player, - 1, -1, -1],
           [-1, player, - 1, -1, -1],
@@ -68,18 +56,6 @@ def evaluation(x: int, y: int) -> int:
           [-1, -1, -1, opponent, -1],
           [0, opponent, opponent, player, 0],
           [-1, -1, -1, 0, -1]], 3, 3),
-
-        ([[-1, 0, -1, -1, -1],
-          [-1, opponent, - 1, -1, -1],
-          [-1, opponent, - 1, -1, -1],
-          [0, player, opponent, opponent, 0],
-          [-1, 0, -1, -1, -1]], 3, 1),
-
-        ([[-1, -1, -1, 0, -1],
-          [0, opponent, opponent, player, 0],
-          [-1, -1, -1, opponent, -1],
-          [-1, -1, -1, opponent, -1],
-          [-1, -1, -1, 0, -1]], 1, 3),
 
         ([[-1, 0, -1, -1, -1],
           [0, player, opponent, opponent, 0],
@@ -102,19 +78,19 @@ def evaluation(x: int, y: int) -> int:
 
     for pattern, left_offset in one_dimensional_winning_pattern_list:
         if is_one_dimensional_pattern_match(pattern, x, y, left_offset):
-            return 200
+            return 100
 
     for pattern, left_offset, right_offset in one_dimensional_important_pattern_list:
         if is_one_dimensional_pattern_match(pattern, x, y, left_offset, right_offset):
-            return 200
+            return 100
 
     for pattern, anchor_x, anchor_y in two_dimensional_winning_pattern_list:
         if is_two_dimensional_pattern_match(pattern, x, y, anchor_x, anchor_y):
-            return 200
+            return 100
 
     for pattern, anchor_x, anchor_y in two_dimensional_important_pattern_list:
         if is_two_dimensional_pattern_match(pattern, x, y, anchor_x, anchor_y):
-            return 200
+            return 100
 
     for pattern, expect_reward, left_offset in one_dimensional_pattern_list:
         reward += expect_reward * is_one_dimensional_pattern_match(pattern, x, y, left_offset)
@@ -140,11 +116,9 @@ def is_one_dimensional_pattern_match(pattern: [], x: int, y: int, l_ofs: int, *r
 
     return (int(is_pattern_match([pattern], [np.array(ai.chess)[x, y - l_ofs: y + r_ofs]])) +
             int(is_pattern_match([pattern], [np.array(ai.chess)[x - l_ofs: x + r_ofs, y]])) +
-            int(is_pattern_match([pattern],
-                                 [np.diagonal(ai.chess, offset=diff)[y - bias - l_ofs:y - bias + r_ofs]])) +
-            int(is_pattern_match([pattern],
-                                 [np.diagonal(np.rot90(ai.chess), offset=rot)[
-                                  x - rot_bias - l_ofs:x - rot_bias + r_ofs]])))
+            int(is_pattern_match([pattern], [np.diagonal(ai.chess, offset=diff)[y - bias - l_ofs:y - bias + r_ofs]])) +
+            int(is_pattern_match([pattern], [np.diagonal(np.rot90(ai.chess), offset=rot)[
+                                             x - rot_bias - l_ofs:x - rot_bias + r_ofs]])))
 
 
 def is_two_dimensional_pattern_match(pattern: [[]], x: int, y: int, anchor_x: int, anchor_y: int) -> int:
