@@ -1,5 +1,7 @@
-import copy
 import threading
+from multiprocessing.pool import ThreadPool
+
+import copy
 import wx
 
 import ai
@@ -18,6 +20,13 @@ BUTTON_WIDTH_MARGIN = 6
 BUTTON_HEIGHT_MARGIN = 45
 ROW_LIST_MARGIN = 40
 COLUMN_LIST_MARGIN = 25
+
+pool = ThreadPool(processes=1)
+
+
+def analyze_thread():
+    async_result = pool.apply_async(ai.evaluate.state_function_thread, (copy.deepcopy(ai.chess), ai.moves))
+    print(async_result.get())
 
 
 class GomokuFrame(wx.Frame):
@@ -230,9 +239,10 @@ class GomokuFrame(wx.Frame):
                     if ai.chess[y][x] == 0:
                         ai.add_move(x, y)
                         self.draw_move(x, y)
-                        thread = threading.Thread(target=ai.evaluate.get_state,
-                                                  args=((copy.deepcopy(ai.chess), ai.moves),))
+                        thread = threading.Thread(target=analyze_thread)
+                        thread.setDaemon(True)
                         thread.start()
+
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()
