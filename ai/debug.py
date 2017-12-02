@@ -10,8 +10,7 @@ def pattern_match_debug(y, x):
 
     one_dimensional_winning_pattern_list = [
         ([player, player, player, player, player], 4),
-        ([player, opponent, opponent, opponent, opponent, player], 5),
-        ([0, player, player, player, player, 0], 4),
+        ([player, player, player, player, 0], 3),
     ]
 
     one_dimensional_dangerous_pattern_list = [
@@ -68,11 +67,13 @@ def pattern_match_debug(y, x):
 
     for pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_winning_pattern_list:
         if ai.evaluate.two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y):
-            print(numpy.array(pattern), ai.evaluate.two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y))
+            print(numpy.array(pattern),
+                  ai.evaluate.two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y))
 
     for pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_dangerous_pattern_list:
         if ai.evaluate.two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y):
-            print(numpy.array(pattern), ai.evaluate.two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y))
+            print(numpy.array(pattern),
+                  ai.evaluate.two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y))
 
     for pattern, need_reverse, left_offset, _ in one_dimensional_pattern_list:
         if ai.evaluate.one_dimensional_pattern_match(pattern, need_reverse, x, y, left_offset):

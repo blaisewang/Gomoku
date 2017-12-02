@@ -1,9 +1,10 @@
+import copy
 import threading
-
 import wx
 
 import ai
 import ai.debug
+import ai.evaluate
 
 WIN_WIDTH = 1024
 WIN_HEIGHT = 720
@@ -209,7 +210,6 @@ class GomokuFrame(wx.Frame):
         current_player = 1 if self.moves % 2 == 1 else 2
         self.chess_record.append((x, y))
         self.draw_chess()
-        ai.debug.pattern_match_debug(x, y)
         if self.moves > 8:
             if ai.has_winner(x, y):
                 self.winner = current_player
@@ -217,11 +217,6 @@ class GomokuFrame(wx.Frame):
             else:
                 if self.moves == 255:
                     self.draw_draw_banner()
-
-    def add_move(self, args):
-        x, y = args
-        ai.add_move(x, y)
-        wx.CallAfter(self.draw_move, x, y)
 
     def on_click(self, e):
         if self.winner == 0:
@@ -233,8 +228,10 @@ class GomokuFrame(wx.Frame):
                 y = int(y / BLOCK_LENGTH) + 4
                 if 4 <= x < 19 and 4 <= y < 19:
                     if ai.chess[y][x] == 0:
-                        thread = threading.Thread(target=self.add_move, args=((x, y),))
-                        thread.setDaemon(True)
+                        ai.add_move(x, y)
+                        self.draw_move(x, y)
+                        thread = threading.Thread(target=ai.evaluate.get_state,
+                                                  args=((copy.deepcopy(ai.chess), ai.moves),))
                         thread.start()
         elif self.is_banner_displayed:
             self.draw_board()

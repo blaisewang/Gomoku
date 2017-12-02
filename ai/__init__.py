@@ -56,7 +56,6 @@ def has_winner(y: int, x: int) -> bool:
     player = 2 if moves % 2 == 0 else 1
     return evaluate.has_winner([player, player, player, player, player], x, y)
 
-
 # def initial_weight_dictionary():
 #     weight = [[0.0 for _ in range(15)] for _ in range(15)]
 #     weight[7][7] = 1.0
