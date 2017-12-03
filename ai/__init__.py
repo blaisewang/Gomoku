@@ -1,22 +1,20 @@
 import copy
+import numpy as np
+import os
 import pickle
 import shutil
-import threading
 from multiprocessing.pool import ThreadPool
-import numpy as np
-
-import os
 
 import ai.play
 import ai.evaluate
 
-moves: int = 0
+moves: int
 winner: int
 chess: [[]]
 
-last_state: []
+last_state = {}
 state_list = []
-reward_matrix: np.matrix
+q_matrix: np.matrix
 # black_key_record: [(str, (int, int))] = []
 # white_key_record: [(str, (int, int))] = []
 
@@ -27,7 +25,7 @@ pool = ThreadPool(processes=1)
 
 
 def initialize():
-    global moves, chess, winner, last_state, reward_matrix
+    global moves, chess, winner, last_state, q_matrix
     moves = 0
     winner = 0
     # black_key_record = []
@@ -38,24 +36,21 @@ def initialize():
             chess[i][j] = 0
 
     if len(state_list) == 0:
-        state, _ = evaluate.state_function_thread(chess, moves, (11, 11))
+        state, _ = evaluate.StateAndReward(chess, (11, 11), moves).get_state_and_reward()
         last_state = state
         state_list.append(state)
-        reward_matrix = np.matrix(np.array([[0]]))
+        q_matrix = np.matrix(np.array([[0]]))
 
 
-def learning_thread(args):
-    global last_state, reward_matrix
-    async_result = pool.apply_async(evaluate.state_function_thread, (copy.deepcopy(chess), moves, args))
-    state, reward = async_result.get()
+def q_matrix_thread(args):
+    global last_state, q_matrix
+    state, _ = evaluate.StateAndReward(copy.deepcopy(chess), args, moves).get_state_and_reward()
     if state not in state_list:
-        reward_matrix = np.row_stack((reward_matrix, np.zeros(len(state_list))))
+        q_matrix = np.row_stack((q_matrix, np.zeros(len(state_list))))
         state_list.append(state)
-        reward_matrix = np.column_stack((reward_matrix, np.zeros((len(state_list), 1))))
-    reward_matrix[state_list.index(last_state), state_list.index(state)] = reward
+        q_matrix = np.column_stack((q_matrix, np.zeros((len(state_list), 1))))
+        q_matrix[state_list.index(last_state), state_list.index(state)] = 0
     last_state = state
-    if winner != 0:
-        save_training_data()
 
 
 def add_move(y: int, x: int):
@@ -63,10 +58,6 @@ def add_move(y: int, x: int):
     moves += 1
     player = 2 if moves % 2 == 0 else 1
     chess[x][y] = player
-
-    thread = threading.Thread(target=learning_thread, args=((x, y),))
-    thread.setDaemon(True)
-    thread.start()
     # if moves > 1:
     #     if moves % 2 == 0:
     #         black_key_record.append((key, (x - 4, y - 4)))
@@ -83,29 +74,29 @@ def remove_move(y: int, x: int):
 def has_winner(y: int, x: int):
     global winner
     player = 2 if moves % 2 == 0 else 1
-    if evaluate.has_winner([player, player, player, player, player], x, y):
+    if evaluate.StateAndReward(ai.chess, (x, y)).has_winner([player, player, player, player, player]):
         winner = player
 
 
-def get_boundary() -> [[]]:
-    boundary = [[0.0 for _ in range(15)] for _ in range(15)]
+def get_boundary(chess_copy: [[]]) -> []:
+    boundary = []
     for i in range(4, 19):
         for j in range(4, 19):
-            if chess[i][j] == 0:
-                if (chess[i - 1][j - 1] == 1 or chess[i - 1][j - 1] == 2) or (
-                        chess[i - 1][j] == 1 or chess[i - 1][j] == 2) or (
-                        chess[i - 1][j + 1] == 1 or chess[i - 1][j + 1] == 2) or (
-                        chess[i][j - 1] == 1 or chess[i][j - 1] == 2) or (
-                        chess[i][j + 1] == 1 or chess[i][j + 1] == 2) or (
-                        chess[i + 1][j - 1] == 1 or chess[i + 1][j - 1] == 2) or (
-                        chess[i + 1][j] == 1 or chess[i + 1][j] == 2) or (
-                        chess[i + 1][j + 1] == 1 or chess[i + 1][j + 1] == 2):
-                    boundary[i - 4][j - 4] = 1.0
+            if chess_copy[i][j] == 0:
+                if (chess_copy[i - 1][j - 1] == 1 or chess_copy[i - 1][j - 1] == 2) or (
+                        chess_copy[i - 1][j] == 1 or chess_copy[i - 1][j] == 2) or (
+                        chess_copy[i - 1][j + 1] == 1 or chess_copy[i - 1][j + 1] == 2) or (
+                        chess_copy[i][j - 1] == 1 or chess_copy[i][j - 1] == 2) or (
+                        chess_copy[i][j + 1] == 1 or chess_copy[i][j + 1] == 2) or (
+                        chess_copy[i + 1][j - 1] == 1 or chess_copy[i + 1][j - 1] == 2) or (
+                        chess_copy[i + 1][j] == 1 or chess_copy[i + 1][j] == 2) or (
+                        chess_copy[i + 1][j + 1] == 1 or chess_copy[i + 1][j + 1] == 2):
+                    boundary.append((i, j))
     return boundary
 
 
 def load_training_data() -> bool:
-    global state_list, reward_matrix
+    global state_list, q_matrix
     try:
         bytes_in = bytearray(0)
         input_size = os.path.getsize(training_data_path)
@@ -113,19 +104,19 @@ def load_training_data() -> bool:
             for _ in range(0, input_size, max_bytes):
                 bytes_in += file_in.read(max_bytes)
         training_tuple = pickle.loads(bytes_in)
-        state_list, reward_matrix = training_tuple
+        state_list, q_matrix = training_tuple
         file_in.close()
         shutil.copyfile(training_data_path, training_data_path + ".backup")
         return True
     except IOError as error:
         print(error)
         state_list = []
-        reward_matrix = [[]]
+        q_matrix = [[]]
         return False
 
 
 def save_training_data() -> bool:
-    bytes_out = pickle.dumps((state_list, reward_matrix))
+    bytes_out = pickle.dumps((state_list, q_matrix))
     try:
         with open(training_data_path, 'wb') as file_out:
             for i in range(0, len(bytes_out), max_bytes):

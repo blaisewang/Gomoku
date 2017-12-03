@@ -1,7 +1,9 @@
+import threading
+
 import wx
 
 import ai
-import ai.debug
+import ai.play
 import ai.evaluate
 
 WIN_WIDTH = 1024
@@ -230,7 +232,11 @@ class GomokuFrame(wx.Frame):
                     if ai.chess[y][x] == 0:
                         ai.add_move(x, y)
                         self.draw_move(x, y)
-
+                        thread = threading.Thread(target=ai.q_matrix_thread, args=((x, y),))
+                        thread.setDaemon(True)
+                        thread.start()
+                        thread.join()
+                        print(ai.play.next_move(True))
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()
