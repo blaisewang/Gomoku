@@ -144,15 +144,19 @@ def self_play_training(times: int):
     for _ in range(times):
         initialize()
         while moves <= 255:
-            state, x, y = play.next_move(True)
+            x, y = play.next_move(True)
             add_move(x, y)
             if moves % 2 == 0:
-                white_key_record.append(state)
+                white_key_record.append(last_state)
             else:
-                black_key_record.append(state)
-            if has_winner(x, y):
+                black_key_record.append(last_state)
+            has_winner(x, y)
+            if winner != 0:
                 break
         play.update_q(winner)
+        print(moves)
+        print(len(state_list))
+        print("")
 
         if save_training_data():
             training_times += times

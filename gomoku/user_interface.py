@@ -109,7 +109,6 @@ class GomokuFrame(wx.Frame):
         ai.initialize()
         self.moves = 0
         self.current_move = 0
-        ai.winner = 0
         self.chess_record.clear()
         self.draw_board()
         self.back_button.Disable()
@@ -118,7 +117,7 @@ class GomokuFrame(wx.Frame):
         self.ai_play_button.Enable()
 
     def on_ai_play_button_click(self, _):
-        _, (x, y) = ai.play.next_move(False)
+        x, y = ai.play.next_move(False)
         ai.add_move(x, y)
         self.draw_move(y, x)
         if ai.moves == 255 or ai.winner != 0:

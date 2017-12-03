@@ -97,7 +97,7 @@ def next_move(is_training: bool) -> (int, int):
 
         ai.last_state = next_state
 
-        return next_state, (next_x, next_y)
+        return next_x, next_y
 
 
 def update_q(winner: int):
