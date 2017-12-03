@@ -1,32 +1,61 @@
-import os.path
+import copy
 import pickle
-import time
+import shutil
+import threading
+from multiprocessing.pool import ThreadPool
+import numpy as np
+
+import os
 
 import ai.play
 import ai.evaluate
 
 moves: int = 0
-chess = [[-2 for _ in range(23)] for _ in range(23)]
-for row in range(4, 19):
-    for column in range(4, 19):
-        chess[row][column] = 0
-# weight_dictionary = {}
-black_key_record: [(str, (int, int))] = []
-white_key_record: [(str, (int, int))] = []
+winner: int
+chess: [[]]
 
-file_path = "training.data"
+last_state: []
+state_list = []
+reward_matrix: np.matrix
+# black_key_record: [(str, (int, int))] = []
+# white_key_record: [(str, (int, int))] = []
+
+training_data_path = "training.data"
 max_bytes = 2 ** 31 - 1
+
+pool = ThreadPool(processes=1)
 
 
 def initialize():
-    global moves, chess, black_key_record, white_key_record
+    global moves, chess, winner, last_state, reward_matrix
     moves = 0
-    black_key_record = []
-    white_key_record = []
-    chess = [[0 for _ in range(23)] for _ in range(23)]
+    winner = 0
+    # black_key_record = []
+    # white_key_record = []
+    chess = [[-2 for _ in range(23)] for _ in range(23)]
     for i in range(4, 19):
         for j in range(4, 19):
             chess[i][j] = 0
+
+    if len(state_list) == 0:
+        state, _ = evaluate.state_function_thread(chess, moves, (11, 11))
+        last_state = state
+        state_list.append(state)
+        reward_matrix = np.matrix(np.array([[0]]))
+
+
+def learning_thread(args):
+    global last_state, reward_matrix
+    async_result = pool.apply_async(evaluate.state_function_thread, (copy.deepcopy(chess), moves, args))
+    state, reward = async_result.get()
+    if state not in state_list:
+        reward_matrix = np.row_stack((reward_matrix, np.zeros(len(state_list))))
+        state_list.append(state)
+        reward_matrix = np.column_stack((reward_matrix, np.zeros((len(state_list), 1))))
+    reward_matrix[state_list.index(last_state), state_list.index(state)] = reward
+    last_state = state
+    if winner != 0:
+        save_training_data()
 
 
 def add_move(y: int, x: int):
@@ -34,16 +63,15 @@ def add_move(y: int, x: int):
     moves += 1
     player = 2 if moves % 2 == 0 else 1
     chess[x][y] = player
-    key = get_chess_key()
-    if moves > 1:
-        if moves % 2 == 0:
-            black_key_record.append((key, (x - 4, y - 4)))
-        else:
-            white_key_record.append((key, (x - 4, y - 4)))
-            # if len(ai.weight_dictionary) == 0:
-            #     initial_weight_dictionary()
-            #     weight_dictionary[key] = get_boundary()
-            # weight_dictionary[key] = get_boundary()
+
+    thread = threading.Thread(target=learning_thread, args=((x, y),))
+    thread.setDaemon(True)
+    thread.start()
+    # if moves > 1:
+    #     if moves % 2 == 0:
+    #         black_key_record.append((key, (x - 4, y - 4)))
+    #     else:
+    #         white_key_record.append((key, (x - 4, y - 4)))
 
 
 def remove_move(y: int, x: int):
@@ -52,18 +80,11 @@ def remove_move(y: int, x: int):
     chess[x][y] = 0
 
 
-def has_winner(y: int, x: int) -> bool:
+def has_winner(y: int, x: int):
+    global winner
     player = 2 if moves % 2 == 0 else 1
-    return evaluate.has_winner([player, player, player, player, player], x, y)
-
-# def initial_weight_dictionary():
-#     weight = [[0.0 for _ in range(15)] for _ in range(15)]
-#     weight[7][7] = 1.0
-#     weight_dictionary["".join("0" for _ in range(225))] = weight
-
-
-def get_chess_key():
-    return "".join(map(str, [chess[i][j] for i in range(4, 19) for j in range(4, 19)]))
+    if evaluate.has_winner([player, player, player, player, player], x, y):
+        winner = player
 
 
 def get_boundary() -> [[]]:
@@ -72,30 +93,48 @@ def get_boundary() -> [[]]:
         for j in range(4, 19):
             if chess[i][j] == 0:
                 if (chess[i - 1][j - 1] == 1 or chess[i - 1][j - 1] == 2) or (
-                                chess[i - 1][j] == 1 or chess[i - 1][j] == 2) or (
-                                chess[i - 1][j + 1] == 1 or chess[i - 1][j + 1] == 2) or (
-                                chess[i][j - 1] == 1 or chess[i][j - 1] == 2) or (
-                                chess[i][j + 1] == 1 or chess[i][j + 1] == 2) or (
-                                chess[i + 1][j - 1] == 1 or chess[i + 1][j - 1] == 2) or (
-                                chess[i + 1][j] == 1 or chess[i + 1][j] == 2) or (
-                                chess[i + 1][j + 1] == 1 or chess[i + 1][j + 1] == 2):
+                        chess[i - 1][j] == 1 or chess[i - 1][j] == 2) or (
+                        chess[i - 1][j + 1] == 1 or chess[i - 1][j + 1] == 2) or (
+                        chess[i][j - 1] == 1 or chess[i][j - 1] == 2) or (
+                        chess[i][j + 1] == 1 or chess[i][j + 1] == 2) or (
+                        chess[i + 1][j - 1] == 1 or chess[i + 1][j - 1] == 2) or (
+                        chess[i + 1][j] == 1 or chess[i + 1][j] == 2) or (
+                        chess[i + 1][j + 1] == 1 or chess[i + 1][j + 1] == 2):
                     boundary[i - 4][j - 4] = 1.0
     return boundary
 
-# def load_weight_dictionary():
-#     global weight_dictionary
-#     try:
-#         bytes_in = bytearray(0)
-#         input_size = os.path.getsize(file_path)
-#         with open(file_path, 'rb') as file_in:
-#             for _ in range(0, input_size, max_bytes):
-#                 bytes_in += file_in.read(max_bytes)
-#         weight_dictionary = pickle.loads(bytes_in)
-#         print(len(weight_dictionary))
-#     except IOError as e:
-#         print(e)
-#         weight_dictionary = dict()
 
+def load_training_data() -> bool:
+    global state_list, reward_matrix
+    try:
+        bytes_in = bytearray(0)
+        input_size = os.path.getsize(training_data_path)
+        with open(training_data_path, 'rb') as file_in:
+            for _ in range(0, input_size, max_bytes):
+                bytes_in += file_in.read(max_bytes)
+        training_tuple = pickle.loads(bytes_in)
+        state_list, reward_matrix = training_tuple
+        file_in.close()
+        shutil.copyfile(training_data_path, training_data_path + ".backup")
+        return True
+    except IOError as error:
+        print(error)
+        state_list = []
+        reward_matrix = [[]]
+        return False
+
+
+def save_training_data() -> bool:
+    bytes_out = pickle.dumps((state_list, reward_matrix))
+    try:
+        with open(training_data_path, 'wb') as file_out:
+            for i in range(0, len(bytes_out), max_bytes):
+                file_out.write(bytes_out[i: i + max_bytes])
+            file_out.close()
+            return True
+    except IOError as e:
+        print(e)
+        return False
 
 # def self_play_training(times: int):
 #     load_weight_dictionary()

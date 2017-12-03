@@ -1,7 +1,3 @@
-import threading
-from multiprocessing.pool import ThreadPool
-
-import copy
 import wx
 
 import ai
@@ -20,13 +16,6 @@ BUTTON_WIDTH_MARGIN = 6
 BUTTON_HEIGHT_MARGIN = 45
 ROW_LIST_MARGIN = 40
 COLUMN_LIST_MARGIN = 25
-
-pool = ThreadPool(processes=1)
-
-
-def analyze_thread():
-    async_result = pool.apply_async(ai.evaluate.state_function_thread, (copy.deepcopy(ai.chess), ai.moves))
-    print(async_result.get())
 
 
 class GomokuFrame(wx.Frame):
@@ -90,7 +79,7 @@ class GomokuFrame(wx.Frame):
 
     def on_back_button_click(self, _):
         self.current_move -= 1
-        self.winner = 0
+        ai.winner = 0
         x, y = self.chess_record[self.current_move]
         ai.remove_move(x, y)
         self.draw_board()
@@ -118,7 +107,7 @@ class GomokuFrame(wx.Frame):
         ai.initialize()
         self.moves = 0
         self.current_move = 0
-        self.winner = 0
+        ai.winner = 0
         self.chess_record.clear()
         self.draw_board()
         self.back_button.Disable()
@@ -130,7 +119,7 @@ class GomokuFrame(wx.Frame):
         # x, y = ai.play.next_move()
         # ai.add_move(x, y)
         # self.draw_move(x, y)
-        # if self.move == 255 or self.winner != 0:
+        # if self.move == 255 or ai.winner != 0:
         #     self.ai_button.Disable()
         pass
 
@@ -149,6 +138,9 @@ class GomokuFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_ai_play_button_click, self.ai_play_button)
         self.Centre()
         self.Show(True)
+        if not ai.load_training_data():
+            self.ai_play_button.Disable()
+        ai.initialize()
 
     def draw_board(self):
         dc = wx.ClientDC(self)
@@ -185,7 +177,7 @@ class GomokuFrame(wx.Frame):
             dc.DrawCircle(x, y, self.inner_circle_radius)
 
     def draw_banner(self):
-        string = ("BLACK" if self.winner == 1 else "WHITE") + " WIN"
+        string = ("BLACK" if ai.winner == 1 else "WHITE") + " WIN"
         dc = wx.ClientDC(self)
         dc.SetBrush(wx.Brush(wx.WHITE))
         dc.DrawRectangle((WIN_WIDTH - BANNER_WIDTH) / 2, (WIN_HEIGHT - BANNER_HEIGHT) / 2 - HEIGHT_OFFSET + 5,
@@ -216,19 +208,18 @@ class GomokuFrame(wx.Frame):
             self.forward_button.Disable()
         self.current_move += 1
         self.moves = self.current_move
-        current_player = 1 if self.moves % 2 == 1 else 2
         self.chess_record.append((x, y))
         self.draw_chess()
         if self.moves > 8:
-            if ai.has_winner(x, y):
-                self.winner = current_player
+            ai.has_winner(x, y)
+            if ai.winner != 0:
                 self.draw_banner()
             else:
                 if self.moves == 255:
                     self.draw_draw_banner()
 
     def on_click(self, e):
-        if self.winner == 0:
+        if ai.winner == 0:
             x, y = e.GetPosition()
             x = x - self.grid_position_x + BLOCK_LENGTH / 2
             y = y - self.grid_position_y + BLOCK_LENGTH / 2
@@ -239,9 +230,6 @@ class GomokuFrame(wx.Frame):
                     if ai.chess[y][x] == 0:
                         ai.add_move(x, y)
                         self.draw_move(x, y)
-                        thread = threading.Thread(target=analyze_thread)
-                        thread.setDaemon(True)
-                        thread.start()
 
         elif self.is_banner_displayed:
             self.draw_board()
