@@ -6,9 +6,9 @@ class StateAndReward:
     y: int
     move: int
     chess: [[]]
-    one_dimensional_opponent_pattern_list: []
-    one_dimensional_opponent_winning_pattern_list: []
-    two_dimensional_opponent_winning_pattern_list: [[]]
+    one_dimensional_player_pattern_list: []
+    one_dimensional_player_winning_pattern_list: []
+    two_dimensional_player_winning_pattern_list: [[]]
 
     def __init__(self, chess, args, moves=0, is_simulate=False):
         self.chess = chess
@@ -17,45 +17,50 @@ class StateAndReward:
         if is_simulate:
             self.chess[self.x][self.y] = 2 if self.move % 2 == 0 else 1
 
-        player = 1 if self.move % 2 == 0 else 2
+        player = 2 if self.move % 2 == 0 else 1
         opponent = 2 if player == 1 else 1
-        self.one_dimensional_opponent_pattern_list = [
-            ("BOOBOB", [0, opponent, opponent, 0, opponent, 0], True, 4, 100),
-            ("OOBOO", [opponent, opponent, 0, opponent, opponent], False, 4, 100),
-            ("OOOBO", [opponent, opponent, opponent, 0, opponent], True, 4, 100),
-            ("BOOOB", [0, opponent, opponent, opponent, 0], False, 3, 50),
-            ("BOOB", [0, opponent, opponent, 0], False, 2, 40),
-            ("BOBOB", [0, opponent, 0, opponent, 0], False, 3, 30),
-            ("POOOOB", [player, opponent, opponent, opponent, opponent, 0], True, 4, 20),
-            ("POOOB", [player, opponent, opponent, opponent, 0], True, 3, 10),
-            ("POOB", [player, opponent, opponent, 0], True, 2, 5),
-            ("POB", [player, opponent, 0], True, 1, 1)
+
+        self.one_dimensional_player_pattern_list = [
+            ("BPPBPB", [0, player, player, 0, player, 0], True, 4, 100),
+            ("PPBPP", [player, player, 0, player, player], False, 4, 100),
+            ("PPPBP", [player, player, player, 0, player], True, 4, 100),
+            ("BPPPB", [0, player, player, player, 0], False, 3, 30),
+            ("BPPB", [0, player, player, 0], False, 2, 25),
+            ("BPBPB", [0, player, 0, player, 0], False, 3, 20),
+            ("OPPPPB", [opponent, player, player, player, player, 0], True, 4, 15),
+            ("OPPPB", [opponent, player, player, player, 0], True, 3, 10),
+            ("OPPB", [opponent, player, player, 0], True, 2, 5),
+            ("OPB", [opponent, player, 0], True, 1, 1)
         ]
-        self.one_dimensional_opponent_winning_pattern_list = [
-            ("O_WIN", [opponent, opponent, opponent, opponent, opponent], 4),
-            ("O_N_WIN", [opponent, opponent, opponent, opponent, 0], 3),
+
+        self.one_dimensional_player_winning_pattern_list = [
+            ("P_WIN", [player, player, player, player, player], 4),
+            ("P_N_WIN", [player, player, player, player, 0], 3)
         ]
-        self.two_dimensional_opponent_winning_pattern_list = [
-            ("OC_N_WIN", [[-1, -1, 0, -1, -1],
-                          [-1, -1, opponent, -1, -1],
-                          [0, opponent, opponent, opponent, 0],
-                          [-1, -1, opponent, -1, -1],
+
+        self.two_dimensional_player_winning_pattern_list = [
+            ("PC_N_WIN", [[-1, -1, 0, -1, -1],
+                          [-1, -1, player, -1, -1],
+                          [0, player, player, player, 0],
+                          [-1, -1, player, -1, -1],
                           [-1, -1, 0, -1, -1]], False, (2, 2)),
-            ("OC_N_WIN", [[-1, 0, -1, -1, -1],
-                          [0, opponent, opponent, opponent, 0],
-                          [-1, opponent, - 1, -1, -1],
-                          [-1, opponent, - 1, -1, -1],
+            ("PC_N_WIN", [[-1, 0, -1, -1, -1],
+                          [0, player, player, player, 0],
+                          [-1, player, - 1, -1, -1],
+                          [-1, player, - 1, -1, -1],
                           [-1, 0, -1, -1, -1]], True, (1, 1))
         ]
 
-    def get_state_and_reward(self) -> ({}, int):
+    def get_state_and_reward(self) -> ([], int):
         return self.get_state(), self.get_reward()
 
-    def get_state(self) -> {}:
-        player = 1 if self.move % 2 == 0 else 2
+    def get_state(self) -> []:
+        player = 2 if self.move % 2 == 0 else 1
         opponent = 2 if player == 1 else 1
 
         pattern_dictionary = {
+            "PLAYER": player,
+
             "BPPBPB": 0.0,
             "PPBPP": 0.0,
             "PPPBP": 0.0,
@@ -95,22 +100,21 @@ class StateAndReward:
         }
 
         if self.move == 0:
-            return pattern_dictionary
-
+            return list(pattern_dictionary.values())
         if self.move == 1:
             pattern_dictionary["START"] = 1.0
         else:
-            one_dimensional_player_pattern_list = [
-                ("BPPBPB", [0, player, player, 0, player, 0], True, 4),
-                ("PPBPP", [player, player, 0, player, player], False, 4),
-                ("PPPBP", [player, player, player, 0, player], True, 4),
-                ("BPPPB", [0, player, player, player, 0], False, 3),
-                ("BPPB", [0, player, player, 0], False, 2),
-                ("BPBPB", [0, player, 0, player, 0], False, 3),
-                ("OPPPPB", [opponent, player, player, player, player, 0], True, 4),
-                ("OPPPB", [opponent, player, player, player, 0], True, 3),
-                ("OPPB", [opponent, player, player, 0], True, 2),
-                ("OPB", [opponent, player, 0], True, 1)
+            one_dimensional_opponent_pattern_list = [
+                ("BOOBOB", [0, opponent, opponent, 0, opponent, 0], True, 4),
+                ("OOBOO", [opponent, opponent, 0, opponent, opponent], False, 4),
+                ("OOOBO", [opponent, opponent, opponent, 0, opponent], True, 4),
+                ("BOOOB", [0, opponent, opponent, opponent, 0], False, 3),
+                ("BOOB", [0, opponent, opponent, 0], False, 2),
+                ("BOBOB", [0, opponent, 0, opponent, 0], False, 3),
+                ("POOOOB", [player, opponent, opponent, opponent, opponent, 0], True, 4),
+                ("POOOB", [player, opponent, opponent, opponent, 0], True, 3),
+                ("POOB", [player, opponent, opponent, 0], True, 2),
+                ("POB", [player, opponent, 0], True, 1)
             ]
 
             two_dimensional_pattern_list = [
@@ -136,51 +140,51 @@ class StateAndReward:
                                [-1, 0, -1, -1, -1]], True, (1, 1)),
             ]
 
-            one_dimensional_player_winning_pattern_list = [
-                ("P_WIN", [player, player, player, player, player], 4),
-                ("P_N_WIN", [player, player, player, player, 0], 3)
+            one_dimensional_opponent_winning_pattern_list = [
+                ("O_WIN", [opponent, opponent, opponent, opponent, opponent], 4),
+                ("O_N_WIN", [opponent, opponent, opponent, opponent, 0], 3),
             ]
 
-            two_dimensional_player_winning_pattern_list = [
-                ("PC_N_WIN", [[-1, -1, 0, -1, -1],
-                              [-1, -1, player, -1, -1],
-                              [0, player, player, player, 0],
-                              [-1, -1, player, -1, -1],
+            two_dimensional_opponent_winning_pattern_list = [
+                ("OC_N_WIN", [[-1, -1, 0, -1, -1],
+                              [-1, -1, opponent, -1, -1],
+                              [0, opponent, opponent, opponent, 0],
+                              [-1, -1, opponent, -1, -1],
                               [-1, -1, 0, -1, -1]], False, (2, 2)),
-                ("PC_N_WIN", [[-1, 0, -1, -1, -1],
-                              [0, player, player, player, 0],
-                              [-1, player, - 1, -1, -1],
-                              [-1, player, - 1, -1, -1],
+                ("OC_N_WIN", [[-1, 0, -1, -1, -1],
+                              [0, opponent, opponent, opponent, 0],
+                              [-1, opponent, - 1, -1, -1],
+                              [-1, opponent, - 1, -1, -1],
                               [-1, 0, -1, -1, -1]], True, (1, 1))
             ]
 
             for i in range(4, 19):
                 for j in range(4, 19):
                     if self.chess[i][j] == player:
-                        for key, pattern, need_reverse, left_offset in one_dimensional_player_pattern_list:
+                        for key, pattern, need_reverse, left_offset, _ in self.one_dimensional_player_pattern_list:
                             number = self.one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
                             if number > 0:
                                 pattern_dictionary[key] += number
-                        for key, pattern, left_offset in one_dimensional_player_winning_pattern_list:
+                        for key, pattern, left_offset in self.one_dimensional_player_winning_pattern_list:
                             number = self.one_dimensional_pattern_match(pattern, False, i, j, left_offset)
                             if number > 0:
                                 pattern_dictionary[key] += number
                         for key, pattern, need_rotate, (
-                                anchor_x, anchor_y) in two_dimensional_player_winning_pattern_list:
+                                anchor_x, anchor_y) in self.two_dimensional_player_winning_pattern_list:
                             number = self.two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x, anchor_y)
                             if number > 0:
                                 pattern_dictionary[key] += number
                     elif self.chess[i][j] == opponent:
-                        for key, pattern, need_reverse, left_offset, _ in self.one_dimensional_opponent_pattern_list:
+                        for key, pattern, need_reverse, left_offset in one_dimensional_opponent_pattern_list:
                             number = self.one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
                             if number > 0:
                                 pattern_dictionary[key] += number
-                        for key, pattern, left_offset in self.one_dimensional_opponent_winning_pattern_list:
+                        for key, pattern, left_offset in one_dimensional_opponent_winning_pattern_list:
                             number = self.one_dimensional_pattern_match(pattern, False, i, j, left_offset)
                             if number > 0:
                                 pattern_dictionary[key] += number
                         for key, pattern, need_rotate, (
-                                anchor_x, anchor_y) in self.two_dimensional_opponent_winning_pattern_list:
+                                anchor_x, anchor_y) in two_dimensional_opponent_winning_pattern_list:
                             number = self.two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x, anchor_y)
                             if number > 0:
                                 pattern_dictionary[key] += number
@@ -215,7 +219,7 @@ class StateAndReward:
             if pattern_dictionary["O_CROSS"] % 2 == 0:
                 pattern_dictionary["O_CROSS"] /= 2
 
-        return pattern_dictionary
+        return list(pattern_dictionary.values())
 
     def get_reward(self) -> int:
         if self.move == 0:
@@ -252,7 +256,7 @@ class StateAndReward:
               [-1, 0, -1, -1, -1]], True, (1, 1))
         ]
 
-        for _, pattern, left_offset in self.one_dimensional_opponent_winning_pattern_list:
+        for _, pattern, left_offset in self.one_dimensional_player_winning_pattern_list:
             if self.one_dimensional_pattern_match(pattern, False, self.x, self.y, left_offset):
                 return 100
 
@@ -260,7 +264,7 @@ class StateAndReward:
             if self.one_dimensional_pattern_match(pattern, True, self.x, self.y, left_offset, right_offset):
                 return 100
 
-        for _, pattern, need_rotate, (anchor_x, anchor_y) in self.two_dimensional_opponent_winning_pattern_list:
+        for _, pattern, need_rotate, (anchor_x, anchor_y) in self.two_dimensional_player_winning_pattern_list:
             if self.two_dimensional_pattern_match(pattern, need_rotate, self.x, self.y, anchor_x, anchor_y):
                 return 100
 
@@ -268,7 +272,7 @@ class StateAndReward:
             if self.two_dimensional_pattern_match(pattern, need_rotate, self.x, self.y, anchor_x, anchor_y):
                 return 100
 
-        for _, pattern, need_reverse, left_offset, expect_reward in self.one_dimensional_opponent_pattern_list:
+        for _, pattern, need_reverse, left_offset, expect_reward in self.one_dimensional_player_pattern_list:
             reward += expect_reward * self.one_dimensional_pattern_match(pattern, need_reverse, self.x, self.y,
                                                                          left_offset)
         return reward

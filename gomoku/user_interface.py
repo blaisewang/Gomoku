@@ -83,7 +83,7 @@ class GomokuFrame(wx.Frame):
         self.current_move -= 1
         ai.winner = 0
         x, y = self.chess_record[self.current_move]
-        ai.remove_move(x, y)
+        ai.remove_move(y, x)
         self.draw_board()
         self.draw_chess()
         self.ai_play_button.Enable()
@@ -95,7 +95,7 @@ class GomokuFrame(wx.Frame):
     def on_forward_button_click(self, _):
         x, y = self.chess_record[self.current_move]
         self.current_move += 1
-        ai.add_move(x, y)
+        ai.add_move(y, x)
         self.draw_board()
         self.draw_chess()
         self.back_button.Enable()
@@ -213,7 +213,7 @@ class GomokuFrame(wx.Frame):
         self.chess_record.append((x, y))
         self.draw_chess()
         if self.moves > 8:
-            ai.has_winner(x, y)
+            ai.has_winner(y, x)
             if ai.winner != 0:
                 self.draw_banner()
             else:
@@ -230,13 +230,12 @@ class GomokuFrame(wx.Frame):
                 y = int(y / BLOCK_LENGTH) + 4
                 if 4 <= x < 19 and 4 <= y < 19:
                     if ai.chess[y][x] == 0:
-                        ai.add_move(x, y)
+                        ai.add_move(y, x)
                         self.draw_move(x, y)
-                        thread = threading.Thread(target=ai.q_matrix_thread, args=((x, y),))
+                        thread = threading.Thread(target=ai.q_matrix_thread, args=((y, x),))
                         thread.setDaemon(True)
                         thread.start()
                         thread.join()
-                        print(ai.play.next_move(True))
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()
