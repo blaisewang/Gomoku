@@ -61,11 +61,6 @@ def add_move(x: int, y: int):
     moves += 1
     player = 2 if moves % 2 == 0 else 1
     chess[x][y] = player
-    # if moves > 1:
-    #     if moves % 2 == 0:
-    #         black_key_record.append((key, (x - 4, y - 4)))
-    #     else:
-    #         white_key_record.append((key, (x - 4, y - 4)))
 
 
 def remove_move(x: int, y: int):

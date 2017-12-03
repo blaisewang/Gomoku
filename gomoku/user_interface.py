@@ -118,12 +118,11 @@ class GomokuFrame(wx.Frame):
         self.ai_play_button.Enable()
 
     def on_ai_play_button_click(self, _):
-        # x, y = ai.play.next_move()
-        # ai.add_move(x, y)
-        # self.draw_move(x, y)
-        # if self.move == 255 or ai.winner != 0:
-        #     self.ai_button.Disable()
-        pass
+        _, (x, y) = ai.play.next_move(False)
+        ai.add_move(x, y)
+        self.draw_move(y, x)
+        if ai.moves == 255 or ai.winner != 0:
+            self.ai_play_button.Disable()
 
     def on_paint(self, _):
         dc = wx.PaintDC(self)
