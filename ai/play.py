@@ -36,15 +36,19 @@ def next_move(is_training: bool) -> (int, int):
                 greedy = False
 
         if greedy:
-            result = []
-            for x, y in next_move_list:
-                result.append(pool.apply_async(ai.evaluate.get_next_move_result, ((x, y), chess, ai.moves)))
-            for res in result:
-                args, (state, reward) = res.get()
-                q_value = 0.0
-                if state in ai.state_list:
-                    q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
-                next_move_result.append((args, state, q_value, reward))
+            if len(ai.next_result_list) == 0:
+                result = []
+                for x, y in next_move_list:
+                    result.append(pool.apply_async(ai.evaluate.get_next_move_result, ((x, y), chess, ai.moves)))
+                for res in result:
+                    args, (state, reward) = res.get()
+                    q_value = 0.0
+                    if state in ai.state_list:
+                        q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
+                    next_move_result.append((args, state, q_value, reward))
+            else:
+                next_move_result = copy.deepcopy(ai.next_result_list)
+                ai.next_result_list.clear()
 
             max_q = 0.0
             potential_next_move_greedy_result = []
@@ -79,11 +83,12 @@ def next_move(is_training: bool) -> (int, int):
             pool.close()
             pool.join()
             for res in result:
-                state, _ = res.get()
+                args, (state, reward) = res.get()
                 q_value = 0.0
                 if state in ai.state_list:
                     q_value = ai.q_matrix[ai.state_list.index(next_state), ai.state_list.index(state)]
                 potential_q_result.append(q_value)
+                ai.next_result_list.append((args, state, q_value, reward))
 
             ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r + gamma * max(
                 potential_q_result)

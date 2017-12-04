@@ -1,6 +1,5 @@
 import multiprocessing
 
-import os
 import wx
 
 import ai

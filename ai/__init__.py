@@ -16,6 +16,7 @@ chess: [[]]
 
 last_state: []
 state_list: []
+next_result_list = []
 q_matrix: np.matrix
 black_key_record: [([], (int, int))] = []
 white_key_record: [([], (int, int))] = []
@@ -26,11 +27,12 @@ max_bytes = 2 ** 31 - 1
 
 
 def initialize():
-    global moves, chess, winner, last_state, q_matrix, black_key_record, white_key_record
+    global moves, chess, winner, last_state, q_matrix, next_result_list, black_key_record, white_key_record
     moves = 0
     winner = 0
     black_key_record = []
     white_key_record = []
+    next_result_list = []
     chess = [[-2 for _ in range(23)] for _ in range(23)]
     for i in range(4, 19):
         for j in range(4, 19):

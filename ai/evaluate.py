@@ -7,7 +7,7 @@ def get_next_move_result(args, chess, moves) -> ():
 
 
 def get_potential_q_result(args, chess, moves) -> ():
-    return StateAndReward(copy.deepcopy(chess), args, moves + 1, True).get_state_and_reward()
+    return args, StateAndReward(copy.deepcopy(chess), args, moves + 1, True).get_state_and_reward()
 
 
 class StateAndReward:
