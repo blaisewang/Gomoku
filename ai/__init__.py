@@ -35,9 +35,9 @@ def initialize():
         for j in range(4, 19):
             chess[i][j] = 0
 
+    state, _ = evaluate.StateAndReward(chess, (11, 11)).get_state_and_reward()
+    last_state = state
     if len(state_list) == 0:
-        state, _ = evaluate.StateAndReward(chess, (11, 11)).get_state_and_reward()
-        last_state = state
         state_list.append(state)
         q_matrix = np.matrix(np.array([[0]]))
 
