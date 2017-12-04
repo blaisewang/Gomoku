@@ -1,5 +1,4 @@
-import threading
-
+import multiprocessing
 import wx
 
 import ai
@@ -230,10 +229,10 @@ class GomokuFrame(wx.Frame):
                     if ai.chess[y][x] == 0:
                         ai.add_move(y, x)
                         self.draw_move(x, y)
-                        thread = threading.Thread(target=ai.q_matrix_thread, args=((y, x),))
-                        thread.setDaemon(True)
-                        thread.start()
-                        thread.join()
+                        process = multiprocessing.Process(target=ai.q_matrix_processing, args=((y, x),))
+                        process.daemon = True
+                        process.start()
+                        process.join()
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()

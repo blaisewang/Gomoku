@@ -1,42 +1,28 @@
 import copy
 import math
+import multiprocessing
 import numpy as np
 import random
-import threading
+import time
 
 import ai
+import ai.evaluate
 
 epsilon = 0.015
 gamma = 0.8
 
 chess: [[]]
-next_state: {}
-next_move_result: []
-potential_q_result: []
-
-
-def get_next_move_result(args) -> ():
-    state, reward = ai.evaluate.StateAndReward(copy.deepcopy(chess), args, ai.moves, True).get_state_and_reward()
-    q_value = 0.0
-    if state in ai.state_list:
-        q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
-    next_move_result.append((args, state, q_value, reward))
-
-
-def get_potential_q_result(args):
-    state, _ = ai.evaluate.StateAndReward(copy.deepcopy(chess), args, ai.moves + 1, True).get_state_and_reward()
-    q_value = 0.0
-    if state in ai.state_list:
-        q_value = ai.q_matrix[ai.state_list.index(next_state), ai.state_list.index(state)]
-    potential_q_result.append(q_value)
 
 
 def next_move(is_training: bool) -> (int, int):
-    global chess, next_state, next_move_result, potential_q_result
+    start_time = time.time()
+
+    global chess
     next_move_result = []
     potential_q_result = []
-    next_state = {}
     greedy_threshold = epsilon * 1000
+
+    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
 
     if ai.moves == 0:
         return 11, 11
@@ -50,13 +36,15 @@ def next_move(is_training: bool) -> (int, int):
                 greedy = False
 
         if greedy:
-            threads = []
+            result = []
             for x, y in next_move_list:
-                thread = threading.Thread(target=get_next_move_result, args=((x, y),))
-                threads.append(thread)
-                thread.start()
-            for thread in threads:
-                thread.join()
+                result.append(pool.apply_async(ai.evaluate.get_next_move_result, ((x, y), chess, ai.moves)))
+            for res in result:
+                args, (state, reward) = res.get()
+                q_value = 0.0
+                if state in ai.state_list:
+                    q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
+                next_move_result.append((args, state, q_value, reward))
 
             max_q = 0.0
             potential_next_move_greedy_result = []
@@ -85,18 +73,24 @@ def next_move(is_training: bool) -> (int, int):
             chess[next_x][next_y] = 2 if (ai.moves + 1) % 2 == 0 else 1
             potential_move_list = ai.get_boundary(chess)
 
-            threads = []
+            result = []
             for x, y in potential_move_list:
-                thread = threading.Thread(target=get_potential_q_result, args=((x, y),))
-                threads.append(thread)
-                thread.start()
-            for thread in threads:
-                thread.join()
+                result.append(pool.apply_async(ai.evaluate.get_potential_q_result, ((x, y), chess, ai.moves)))
+            pool.close()
+            pool.join()
+            for res in result:
+                state, _ = res.get()
+                q_value = 0.0
+                if state in ai.state_list:
+                    q_value = ai.q_matrix[ai.state_list.index(next_state), ai.state_list.index(state)]
+                potential_q_result.append(q_value)
+
             ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r + gamma * max(
                 potential_q_result)
 
         ai.last_state = next_state
 
+        print(time.time() - start_time)
         return next_x, next_y
 
 

@@ -3,7 +3,6 @@ import numpy as np
 import os
 import pickle
 import shutil
-from multiprocessing.pool import ThreadPool
 
 import time
 
@@ -15,16 +14,14 @@ winner: int
 training_times: int
 chess: [[]]
 
-last_state = {}
-state_list = []
+last_state: []
+state_list: []
 q_matrix: np.matrix
 black_key_record: [([], (int, int))] = []
 white_key_record: [([], (int, int))] = []
 
 training_data_path = "training.data"
 max_bytes = 2 ** 31 - 1
-
-pool = ThreadPool(processes=1)
 
 
 def initialize():
@@ -45,7 +42,7 @@ def initialize():
         q_matrix = np.matrix(np.array([[0]]))
 
 
-def q_matrix_thread(args):
+def q_matrix_processing(args):
     global last_state, q_matrix
     state, reward = evaluate.StateAndReward(copy.deepcopy(chess), args, moves).get_state_and_reward()
     if state not in state_list:
@@ -145,6 +142,7 @@ def self_play_training(times: int):
         initialize()
         while moves <= 255:
             x, y = play.next_move(True)
+            print(x, y)
             add_move(x, y)
             if moves % 2 == 0:
                 white_key_record.append(last_state)
