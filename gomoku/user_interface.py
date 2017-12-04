@@ -1,4 +1,6 @@
 import multiprocessing
+
+import os
 import wx
 
 import ai
@@ -137,7 +139,7 @@ class GomokuFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_ai_play_button_click, self.ai_play_button)
         self.Centre()
         self.Show(True)
-        if not ai.load_training_data():
+        if not ai.load_training_data(False):
             self.ai_play_button.Disable()
         ai.initialize()
 

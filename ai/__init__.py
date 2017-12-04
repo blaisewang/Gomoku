@@ -20,7 +20,8 @@ q_matrix: np.matrix
 black_key_record: [([], (int, int))] = []
 white_key_record: [([], (int, int))] = []
 
-training_data_path = "training.data"
+load_training_file_path = "./output/training.data"
+training_data_path = "." + load_training_file_path
 max_bytes = 2 ** 31 - 1
 
 
@@ -99,18 +100,24 @@ def get_available_move() -> []:
     return move_list
 
 
-def load_training_data() -> bool:
+def load_training_data(is_training: bool) -> bool:
     global state_list, q_matrix, training_times
+
+    if is_training:
+        file_path = training_data_path
+    else:
+        file_path = load_training_file_path
+
     try:
         bytes_in = bytearray(0)
-        input_size = os.path.getsize(training_data_path)
-        with open(training_data_path, 'rb') as file_in:
+        input_size = os.path.getsize(file_path)
+        with open(file_path, 'rb') as file_in:
             for _ in range(0, input_size, max_bytes):
                 bytes_in += file_in.read(max_bytes)
         training_tuple = pickle.loads(bytes_in)
         training_times, state_list, q_matrix = training_tuple
         file_in.close()
-        shutil.copyfile(training_data_path, training_data_path + ".backup")
+        shutil.copyfile(file_path, file_path + ".backup")
         return True
     except IOError as error:
         print(error)
@@ -136,7 +143,7 @@ def save_training_data() -> bool:
 def self_play_training(times: int):
     global training_times
     time_start = time.time()
-    load_training_data()
+    load_training_data(True)
 
     for _ in range(times):
         initialize()
@@ -152,14 +159,12 @@ def self_play_training(times: int):
             if winner != 0:
                 break
         play.update_q(winner)
-        print(moves)
-        print(len(state_list))
-        print("")
 
-        if save_training_data():
-            training_times += times
-            print("Has been trained", training_times, "times")
-        else:
-            print("Save training data failed")
+    training_times += times
 
-        print("Cost", time.time() - time_start, "s")
+    if save_training_data():
+        print("Has been trained", training_times, "times")
+    else:
+        print("Save training data failed")
+
+    print("Cost", time.time() - time_start, "s")
