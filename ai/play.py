@@ -90,7 +90,7 @@ def next_move(is_training: bool) -> (int, int):
                 potential_q_result.append(q_value)
                 ai.next_result_list.append((args, state, q_value, reward))
 
-            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r + gamma * max(
+            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - gamma * max(
                 potential_q_result)
 
         ai.last_state = next_state
@@ -129,4 +129,5 @@ def update_q(winner: int):
 
 def bias_function(step: int) -> float:
     eta = 0.8
-    return 1 - 2 / math.pi * math.atan(math.pi / 2 * eta * step)
+    penalty = 100
+    return penalty * (1 - 2 / math.pi * math.atan(math.pi / 2 * eta * step))
