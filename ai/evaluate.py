@@ -203,12 +203,18 @@ class StateAndReward:
                             if number > 0:
                                 pattern_dictionary[key] += number
 
+            pattern_dictionary["BPPBPB"] /= 3
+            pattern_dictionary["PPBPP"] /= 4
+            pattern_dictionary["PPPBP"] /= 4
             pattern_dictionary["BPPPB"] /= 3
             pattern_dictionary["BPPB"] /= 2
             pattern_dictionary["BPBPB"] /= 2
             pattern_dictionary["OPPPPB"] /= 4
             pattern_dictionary["OPPPB"] /= 3
             pattern_dictionary["OPPB"] /= 2
+            pattern_dictionary["BOOBOB"] /= 3
+            pattern_dictionary["OOBOO"] /= 4
+            pattern_dictionary["OOOBO"] /= 4
             pattern_dictionary["BOOOB"] /= 3
             pattern_dictionary["BOOB"] /= 2
             pattern_dictionary["BOBOB"] /= 2

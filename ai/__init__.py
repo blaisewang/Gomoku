@@ -1,10 +1,9 @@
 import copy
-import numpy as np
 import os
 import pickle
 import shutil
-
 import time
+import numpy as np
 
 import ai.play
 import ai.evaluate
@@ -21,9 +20,9 @@ q_matrix: np.matrix
 black_key_record: [([], (int, int))] = []
 white_key_record: [([], (int, int))] = []
 
-load_training_file_path = "./output/training.data"
-training_data_path = "." + load_training_file_path
-max_bytes = 2 ** 31 - 1
+LOAD_TRAINING_FILE_PATH = "./output/training.data"
+TRAINING_DATA_PATH = "." + LOAD_TRAINING_FILE_PATH
+MAX_BYTES = 2 ** 31 - 1
 
 
 def initialize():
@@ -40,14 +39,14 @@ def initialize():
 
     state, _ = evaluate.StateAndReward(chess, (11, 11)).get_state_and_reward()
     last_state = state
-    if len(state_list) == 0:
+    if not state_list:
         state_list.append(state)
         q_matrix = np.matrix(np.array([[0]]))
 
 
 def q_matrix_processing(args):
     global last_state, q_matrix
-    state, reward = evaluate.StateAndReward(copy.deepcopy(chess), args, moves).get_state_and_reward()
+    state, _ = evaluate.StateAndReward(copy.deepcopy(chess), args, moves).get_state_and_reward()
     if state not in state_list:
         q_matrix = np.row_stack((q_matrix, np.zeros(len(state_list))))
         state_list.append(state)
@@ -106,16 +105,16 @@ def load_training_data(is_training: bool) -> bool:
     global state_list, q_matrix, training_times
 
     if is_training:
-        file_path = training_data_path
+        file_path = TRAINING_DATA_PATH
     else:
-        file_path = load_training_file_path
+        file_path = LOAD_TRAINING_FILE_PATH
 
     try:
         bytes_in = bytearray(0)
         input_size = os.path.getsize(file_path)
         with open(file_path, 'rb') as file_in:
-            for _ in range(0, input_size, max_bytes):
-                bytes_in += file_in.read(max_bytes)
+            for _ in range(0, input_size, MAX_BYTES):
+                bytes_in += file_in.read(MAX_BYTES)
         training_tuple = pickle.loads(bytes_in)
         training_times, state_list, q_matrix = training_tuple
         file_in.close()
@@ -132,9 +131,9 @@ def load_training_data(is_training: bool) -> bool:
 def save_training_data() -> bool:
     bytes_out = pickle.dumps((training_times, state_list, q_matrix))
     try:
-        with open(training_data_path, 'wb') as file_out:
-            for i in range(0, len(bytes_out), max_bytes):
-                file_out.write(bytes_out[i: i + max_bytes])
+        with open(TRAINING_DATA_PATH, 'wb') as file_out:
+            for i in range(0, len(bytes_out), MAX_BYTES):
+                file_out.write(bytes_out[i: i + MAX_BYTES])
             file_out.close()
             return True
     except IOError as error:

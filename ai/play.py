@@ -1,15 +1,17 @@
 import copy
 import math
 import multiprocessing
-import numpy as np
 import random
 import time
+import numpy as np
+
 
 import ai
 import ai.evaluate
 
-epsilon = 0.015
-gamma = 0.8
+EPSILON = 0.0015
+MAGNIFICATION_FACTOR = 10000
+GAMMA = 0.8
 
 chess: [[]]
 
@@ -20,7 +22,7 @@ def next_move(is_training: bool) -> (int, int):
     global chess
     next_move_result = []
     potential_q_result = []
-    greedy_threshold = epsilon * 1000
+    greedy_threshold = EPSILON * MAGNIFICATION_FACTOR
 
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
 
@@ -32,11 +34,11 @@ def next_move(is_training: bool) -> (int, int):
         next_move_list = ai.get_boundary(chess)
 
         if is_training:
-            if random.randint(1, 1000) <= greedy_threshold:
+            if random.randint(1, MAGNIFICATION_FACTOR) <= greedy_threshold:
                 greedy = False
 
         if greedy:
-            if len(ai.next_result_list) == 0:
+            if not ai.next_result_list:
                 result = []
                 for x, y in next_move_list:
                     result.append(pool.apply_async(ai.evaluate.get_next_move_result, ((x, y), chess, ai.moves)))
@@ -90,7 +92,7 @@ def next_move(is_training: bool) -> (int, int):
                 potential_q_result.append(q_value)
                 ai.next_result_list.append((args, state, q_value, reward))
 
-            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - gamma * max(
+            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - GAMMA * max(
                 potential_q_result)
 
         ai.last_state = next_state
@@ -129,5 +131,5 @@ def update_q(winner: int):
 
 def bias_function(step: int) -> float:
     eta = 0.8
-    penalty = 100
+    penalty = 120
     return penalty * (1 - 2 / math.pi * math.atan(math.pi / 2 * eta * step))
