@@ -164,8 +164,9 @@ def self_play_training(times: int):
                 break
             elif winner == 2:
                 white += 1
+                break
         play.update_q(winner)
-        if i != 0 and i % 100 == 0:
+        if i != 0 and (i + 1) % 100 == 0:
             save_training_data(TRAINING_DATA_PATH + str(training_times + i) + DATA_NAME)
         print(i + 1)
 
