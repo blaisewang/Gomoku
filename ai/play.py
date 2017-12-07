@@ -112,19 +112,20 @@ def update_q(winner: int):
         for i in range(1, length - 2, 2):
             last_state = ai.state_record[length - i - 1]
             state = ai.state_record[length - i]
-            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(i)
+            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(int((i - 1) / 2))
     elif winner == 2:
         length = len(ai.state_record) - 1
         for i in range(1, length - 1, 2):
             last_state = ai.state_record[length - i - 1]
             state = ai.state_record[length - i]
-            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(i)
+            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(int((i - 1) / 2))
     else:
         length = len(ai.state_record) - 1
         for i in range(0, length - 1):
             last_state = ai.state_record[length - i - 1]
             state = ai.state_record[length - i]
-            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= draw_penalty * bias_function(i)
+            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= draw_penalty * bias_function(
+                int((i - 1) / 2))
 
 
 def bias_function(step: int) -> float:

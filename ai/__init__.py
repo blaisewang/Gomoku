@@ -10,6 +10,8 @@ import ai.evaluate
 
 moves: int
 winner: int
+black_wins: int
+white_wins: int
 training_times: int
 chess: [[]]
 
@@ -101,7 +103,7 @@ def get_available_move() -> []:
 
 
 def load_training_data(is_training: bool) -> bool:
-    global state_list, q_matrix, training_times
+    global state_list, q_matrix, black_wins, white_wins, training_times
 
     if is_training:
         file_path = TRAINING_DATA_PATH
@@ -115,8 +117,7 @@ def load_training_data(is_training: bool) -> bool:
         with open(file_path, 'rb') as file_in:
             for _ in range(0, input_size, MAX_BYTES):
                 bytes_in += file_in.read(MAX_BYTES)
-        training_tuple = pickle.loads(bytes_in)
-        training_times, state_list, q_matrix = training_tuple
+        (training_times, black_wins, white_wins), state_list, q_matrix = pickle.loads(bytes_in)
         file_in.close()
         shutil.copyfile(file_path, file_path + ".backup")
         return True
@@ -124,12 +125,14 @@ def load_training_data(is_training: bool) -> bool:
         print(error)
         state_list = []
         q_matrix = [[]]
+        black_wins = 0
+        white_wins = 0
         training_times = 0
         return False
 
 
 def save_training_data(file_path: str) -> bool:
-    bytes_out = pickle.dumps((training_times, state_list, q_matrix))
+    bytes_out = pickle.dumps(((training_times, black_wins, white_wins), state_list, q_matrix))
     try:
         with open(file_path, 'wb') as file_out:
             for i in range(0, len(bytes_out), MAX_BYTES):
@@ -142,9 +145,12 @@ def save_training_data(file_path: str) -> bool:
 
 
 def self_play_training(times: int):
-    global training_times
+    global black_wins, white_wins, training_times
     time_start = time.time()
     load_training_data(True)
+
+    black = 0
+    white = 0
 
     for i in range(times):
         initialize()
@@ -153,13 +159,18 @@ def self_play_training(times: int):
             add_move(x, y)
             state_record.append(last_state)
             has_winner(x, y)
-            if winner != 0:
+            if winner == 1:
+                black += 1
                 break
+            elif winner == 2:
+                white += 1
         play.update_q(winner)
         if i != 0 and i % 100 == 0:
             save_training_data(TRAINING_DATA_PATH + str(training_times + i) + DATA_NAME)
-        print(i)
+        print(i + 1)
 
+    black_wins += black
+    white_wins += white
     training_times += times
 
     if save_training_data(TRAINING_DATA_PATH + DATA_NAME):
@@ -168,3 +179,4 @@ def self_play_training(times: int):
         print("Save training data failed")
 
     print("Cost", time.time() - time_start, "s")
+    print("Black wins", black, " times, White wins", white, " times")
