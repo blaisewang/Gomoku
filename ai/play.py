@@ -48,7 +48,7 @@ def next_move(is_training: bool) -> (int, int):
                 next_move_result = copy.deepcopy(ai.next_result_list)
                 ai.next_result_list.clear()
 
-            max_q = 2.2250738585072014e-308
+            max_q = -sys.maxsize - 1
             potential_next_move_greedy_result = []
             for _, _, q_value, _ in next_move_result:
                 max_q = q_value if q_value > max_q else max_q
