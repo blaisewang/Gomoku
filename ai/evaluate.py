@@ -2,12 +2,12 @@ import copy
 import numpy as np
 
 
-def get_next_move_result(args, chess, moves) -> ():
-    return args, StateAndReward(copy.deepcopy(chess), args, moves, True).get_state_and_reward()
+def get_next_move_result(position, chess, moves) -> ():
+    return position, StateAndReward(copy.deepcopy(chess), position, moves, True).get_state_and_reward()
 
 
-def get_potential_q_result(args, chess, moves) -> ():
-    return args, StateAndReward(copy.deepcopy(chess), args, moves + 1, True).get_state_and_reward()
+def get_potential_q_result(position, chess, moves) -> ():
+    return position, StateAndReward(copy.deepcopy(chess), position, moves + 1, True).get_state_and_reward()
 
 
 class StateAndReward:

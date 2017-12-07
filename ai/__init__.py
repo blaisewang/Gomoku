@@ -20,8 +20,9 @@ q_matrix: np.matrix
 black_key_record: [([], (int, int))] = []
 white_key_record: [([], (int, int))] = []
 
-LOAD_TRAINING_FILE_PATH = "./output/training.data"
-TRAINING_DATA_PATH = "." + LOAD_TRAINING_FILE_PATH
+DATA_NAME = "training.data"
+LOAD_TRAINING_FILE_PATH = "./output/"
+TRAINING_DATA_PATH = "/users/kaitok/gomoku/data/"
 MAX_BYTES = 2 ** 31 - 1
 
 
@@ -108,6 +109,7 @@ def load_training_data(is_training: bool) -> bool:
         file_path = TRAINING_DATA_PATH
     else:
         file_path = LOAD_TRAINING_FILE_PATH
+    file_path += DATA_NAME
 
     try:
         bytes_in = bytearray(0)
@@ -128,10 +130,10 @@ def load_training_data(is_training: bool) -> bool:
         return False
 
 
-def save_training_data() -> bool:
+def save_training_data(file_path: str) -> bool:
     bytes_out = pickle.dumps((training_times, state_list, q_matrix))
     try:
-        with open(TRAINING_DATA_PATH, 'wb') as file_out:
+        with open(file_path, 'wb') as file_out:
             for i in range(0, len(bytes_out), MAX_BYTES):
                 file_out.write(bytes_out[i: i + MAX_BYTES])
             file_out.close()
@@ -146,11 +148,10 @@ def self_play_training(times: int):
     time_start = time.time()
     load_training_data(True)
 
-    for _ in range(times):
+    for i in range(times):
         initialize()
         while moves <= 255:
             x, y = play.next_move(True)
-            print(x, y)
             add_move(x, y)
             if moves % 2 == 0:
                 white_key_record.append(last_state)
@@ -160,10 +161,12 @@ def self_play_training(times: int):
             if winner != 0:
                 break
         play.update_q(winner)
+        if i != 0 and i % 100 == 0:
+            save_training_data(TRAINING_DATA_PATH + str(training_times + i) + DATA_NAME)
 
     training_times += times
 
-    if save_training_data():
+    if save_training_data(TRAINING_DATA_PATH + DATA_NAME):
         print("Has been trained", training_times, "times")
     else:
         print("Save training data failed")
