@@ -5,7 +5,6 @@ import random
 import time
 import numpy as np
 
-
 import ai
 import ai.evaluate
 
@@ -15,6 +14,8 @@ GAMMA = 0.8
 
 chess: [[]]
 
+pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+
 
 def next_move(is_training: bool) -> (int, int):
     start_time = time.time()
@@ -23,8 +24,6 @@ def next_move(is_training: bool) -> (int, int):
     next_move_result = []
     potential_q_result = []
     greedy_threshold = EPSILON * MAGNIFICATION_FACTOR
-
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
 
     if ai.moves == 0:
         return 11, 11
