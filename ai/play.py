@@ -23,13 +23,21 @@ def next_move(is_training: bool) -> (int, int):
     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
 
     if ai.moves == 0:
+        state, reward = ai.evaluate.StateAndReward(copy.deepcopy(ai.chess), (11, 11), ai.moves,
+                                                   True).get_state_and_reward()
+        if state not in ai.state_list:
+            ai.q_matrix = np.row_stack((ai.q_matrix, np.zeros(len(ai.state_list))))
+            ai.state_list.append(state)
+            ai.q_matrix = np.column_stack((ai.q_matrix, np.zeros((len(ai.state_list), 1))))
+            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)] = reward
+        ai.last_state = state
         return 11, 11
     else:
         greedy = True
         chess = copy.deepcopy(ai.chess)
         next_move_list = ai.get_boundary(chess)
 
-        if is_training:
+        if is_training and ai.moves > 2:
             if np.random.randint(1, MAGNIFICATION_FACTOR) <= greedy_threshold:
                 greedy = False
 
@@ -97,30 +105,25 @@ def next_move(is_training: bool) -> (int, int):
 
 
 def update_q(winner: int):
-    draw_penalty = 0.1
+    draw_penalty = 0.05
 
     if winner == 1:
-        length = len(ai.white_key_record) - 1
-        for i in range(length):
-            last_state = ai.white_key_record[length - i - 1]
-            state = ai.white_key_record[length - i]
+        length = len(ai.state_record) - 1
+        for i in range(1, length - 2, 2):
+            last_state = ai.state_record[length - i - 1]
+            state = ai.state_record[length - i]
             ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(i)
     elif winner == 2:
-        length = len(ai.black_key_record) - 1
-        for i in range(length):
-            last_state = ai.black_key_record[length - i - 1]
-            state = ai.black_key_record[length - i]
+        length = len(ai.state_record) - 1
+        for i in range(1, length - 1, 2):
+            last_state = ai.state_record[length - i - 1]
+            state = ai.state_record[length - i]
             ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(i)
     else:
-        length = len(ai.white_key_record) - 1
-        for i in range(length):
-            last_state = ai.white_key_record[length - i - 1]
-            state = ai.white_key_record[length - i]
-            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= draw_penalty * bias_function(i)
-        length = len(ai.black_key_record) - 1
-        for i in range(length):
-            last_state = ai.black_key_record[length - i - 1]
-            state = ai.black_key_record[length - i]
+        length = len(ai.state_record) - 1
+        for i in range(0, length - 1):
+            last_state = ai.state_record[length - i - 1]
+            state = ai.state_record[length - i]
             ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= draw_penalty * bias_function(i)
 
 

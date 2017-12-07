@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="9e8b23f8-d621-4e04-9089-e5a49c4991a8" name="Sciama" url="http://login6.sciama.icg.port.ac.uk">
+        <fileTransfer host="login6.sciama.icg.port.ac.uk" port="22" rootFolder="/users/kaitok/gomoku" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

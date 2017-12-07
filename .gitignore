@@ -100,4 +100,3 @@ ENV/
 .mypy_cache/
 *.data
 *.data.backup
-*.xml

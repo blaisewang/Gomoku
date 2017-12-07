@@ -17,8 +17,7 @@ last_state: []
 state_list: []
 next_result_list = []
 q_matrix: np.matrix
-black_key_record: [([], (int, int))] = []
-white_key_record: [([], (int, int))] = []
+state_record = []
 
 DATA_NAME = "training.data"
 LOAD_TRAINING_FILE_PATH = "./output/"
@@ -27,11 +26,10 @@ MAX_BYTES = 2 ** 31 - 1
 
 
 def initialize():
-    global moves, chess, winner, last_state, q_matrix, next_result_list, black_key_record, white_key_record
+    global moves, chess, winner, last_state, q_matrix, next_result_list, state_record
     moves = 0
     winner = 0
-    black_key_record = []
-    white_key_record = []
+    state_record = []
     next_result_list = []
     chess = [[-2 for _ in range(23)] for _ in range(23)]
     for i in range(4, 19):
@@ -153,16 +151,14 @@ def self_play_training(times: int):
         while moves <= 255:
             x, y = play.next_move(True)
             add_move(x, y)
-            if moves % 2 == 0:
-                white_key_record.append(last_state)
-            else:
-                black_key_record.append(last_state)
+            state_record.append(last_state)
             has_winner(x, y)
             if winner != 0:
                 break
         play.update_q(winner)
         if i != 0 and i % 100 == 0:
             save_training_data(TRAINING_DATA_PATH + str(training_times + i) + DATA_NAME)
+        print(i)
 
     training_times += times
 
