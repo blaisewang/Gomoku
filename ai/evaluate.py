@@ -30,34 +30,31 @@ class StateAndReward:
         opponent = 2 if player == 1 else 1
 
         self.one_dimensional_player_pattern_list = [
-            ("BPPBPB", [0, player, player, 0, player, 0], True, 4, 100),
-            ("PPBPP", [player, player, 0, player, player], False, 4, 100),
-            ("PPPBP", [player, player, player, 0, player], True, 4, 100),
-            ("BPPPB", [0, player, player, player, 0], False, 3, 30),
-            ("BPPB", [0, player, player, 0], False, 2, 25),
-            ("BPBPB", [0, player, 0, player, 0], False, 3, 20),
-            ("OPPPPB", [opponent, player, player, player, player, 0], True, 4, 15),
-            ("OPPPB", [opponent, player, player, player, 0], True, 3, 10),
-            ("OPPB", [opponent, player, player, 0], True, 2, 5),
-            ("OPB", [opponent, player, 0], True, 1, 1)
+            ("B_P_P_P_B", [0, player, player, player, 0], False, 3, 30),
+            ("B_P_P_B_B", [0, player, player, 0, 0], True, 3, 12),
+            ("B_P_B_P_B", [0, player, 0, player, 0], False, 3, 20),
+            ("O_P_P_P_P_B", [opponent, player, player, player, player, 0], True, 4, 15),
+            ("O_P_P_P_B_B", [opponent, player, player, player, 0, 0], True, 4, 10),
+            ("O_P_P_B_B_B", [opponent, player, player, 0, 0, 0], True, 4, 5),
+            ("O_P_B_B_B_B", [opponent, player, 0, 0, 0, 0], True, 4, 1)
         ]
 
         self.one_dimensional_player_winning_pattern_list = [
-            ("P_WIN", [player, player, player, player, player], 4),
-            ("P_N_WIN", [player, player, player, player, 0], 3)
+            ("PLAYER_WIN", [player, player, player, player, player], 4),
+            ("PLAYER_NEARLY_WIN", [0, player, player, player, player, 0], 4)
         ]
 
         self.two_dimensional_player_winning_pattern_list = [
-            ("PC_N_WIN", [[-1, -1, 0, -1, -1],
-                          [-1, -1, player, -1, -1],
-                          [0, player, player, player, 0],
-                          [-1, -1, player, -1, -1],
-                          [-1, -1, 0, -1, -1]], False, (2, 2)),
-            ("PC_N_WIN", [[-1, 0, -1, -1, -1],
-                          [0, player, player, player, 0],
-                          [-1, player, - 1, -1, -1],
-                          [-1, player, - 1, -1, -1],
-                          [-1, 0, -1, -1, -1]], True, (1, 1))
+            ("PLAYER_CROSS_NEARLY_WIN", [[-1, -1, 0, -1, -1],
+                                         [-1, -1, player, -1, -1],
+                                         [0, player, player, player, 0],
+                                         [-1, -1, player, -1, -1],
+                                         [-1, -1, 0, -1, -1]], False, (2, 2)),
+            ("PLAYER_CROSS_NEARLY_WIN", [[-1, 0, -1, -1, -1],
+                                         [0, player, player, player, 0],
+                                         [-1, player, - 1, -1, -1],
+                                         [-1, player, - 1, -1, -1],
+                                         [-1, 0, -1, -1, -1]], True, (1, 1))
         ]
 
     def get_state_and_reward(self) -> ([], int):
@@ -70,40 +67,37 @@ class StateAndReward:
         pattern_dictionary = {
             "PLAYER": player,
 
-            "BPPBPB": 0.0,
-            "PPBPP": 0.0,
-            "PPPBP": 0.0,
-            "BPPPB": 0.0,
-            "BPPB": 0.0,
-            "BPBPB": 0.0,
-            "OPPPPB": 0.0,
-            "OPPPB": 0.0,
-            "OPPB": 0.0,
-            "OPB": 0.0,
+            "B_P_P_P_B": 0.0,
+            "B_P_P_B_B": 0.0,
+            "B_P_B_P_B": 0.0,
+            "O_P_P_P_P_B": 0.0,
+            "O_P_P_P_B_B": 0.0,
+            "O_P_P_B_B_B": 0.0,
+            "O_P_B_B_B_B": 0.0,
 
-            "BOOBOB": 0.0,
-            "OOBOO": 0.0,
-            "OOOBO": 0.0,
-            "BOOOB": 0.0,
-            "BOOB": 0.0,
-            "BOBOB": 0.0,
-            "POOOOB": 0.0,
-            "POOOB": 0.0,
-            "POOB": 0.0,
-            "POB": 0.0,
+            "B_O_O_B_O_B": 0.0,
+            "O_O_B_O_O": 0.0,
+            "O_O_O_B_O": 0.0,
+            "B_O_O_O_B": 0.0,
+            "B_O_O_B_B": 0.0,
+            "B_O_B_O_B": 0.0,
+            "P_O_O_O_O_B": 0.0,
+            "P_O_O_O_B_B": 0.0,
+            "P_O_O_B_B_B": 0.0,
+            "P_O_B_B_B_B": 0.0,
 
-            "P_CROSS": 0.0,
-            "P_V_CROSS": 0.0,
-            "O_CROSS": 0.0,
-            "O_V_CROSS": 0.0,
+            "PLAYER_CROSS": 0.0,
+            "PLAYER_VERTICAL_CROSS": 0.0,
+            "OPPONENT_CROSS": 0.0,
+            "OPPONENT_VERTICAL_CROSS": 0.0,
 
-            "P_N_WIN": 0.0,
-            "PC_N_WIN": 0.0,
-            "P_WIN": 0.0,
+            "PLAYER_NEARLY_WIN": 0.0,
+            "PLAYER_CROSS_NEARLY_WIN": 0.0,
+            "PLAYER_WIN": 0.0,
 
-            "O_N_WIN": 0.0,
-            "OC_N_WIN": 0.0,
-            "O_WIN": 0.0,
+            "OPPONENT_NEARLY_WIN": 0.0,
+            "OPPONENT_CROSS_NEARLY_WIN": 0.0,
+            "OPPONENT_WIN": 0.0,
 
             "START": 0.0
         }
@@ -114,57 +108,57 @@ class StateAndReward:
             pattern_dictionary["START"] = 1.0
         else:
             one_dimensional_opponent_pattern_list = [
-                ("BOOBOB", [0, opponent, opponent, 0, opponent, 0], True, 4),
-                ("OOBOO", [opponent, opponent, 0, opponent, opponent], False, 4),
-                ("OOOBO", [opponent, opponent, opponent, 0, opponent], True, 4),
-                ("BOOOB", [0, opponent, opponent, opponent, 0], False, 3),
-                ("BOOB", [0, opponent, opponent, 0], False, 2),
-                ("BOBOB", [0, opponent, 0, opponent, 0], False, 3),
-                ("POOOOB", [player, opponent, opponent, opponent, opponent, 0], True, 4),
-                ("POOOB", [player, opponent, opponent, opponent, 0], True, 3),
-                ("POOB", [player, opponent, opponent, 0], True, 2),
-                ("POB", [player, opponent, 0], True, 1)
+                ("B_O_O_B_O_B", [0, opponent, opponent, 0, opponent, 0], True, 4),
+                ("O_O_B_O_O", [opponent, opponent, 0, opponent, opponent], False, 4),
+                ("O_O_O_B_O", [opponent, opponent, opponent, 0, opponent], True, 4),
+                ("B_O_O_O_B", [0, opponent, opponent, opponent, 0], False, 3),
+                ("B_O_O_B_B", [0, opponent, opponent, 0, 0], True, 3),
+                ("B_O_B_O_B", [0, opponent, 0, opponent, 0], False, 3),
+                ("P_O_O_O_O_B", [player, opponent, opponent, opponent, opponent, 0], True, 4),
+                ("P_O_O_O_B_B", [player, opponent, opponent, opponent, 0, 0], True, 4),
+                ("P_O_O_B_B_B", [player, opponent, opponent, 0, 0, 0], True, 4),
+                ("P_O_B_B_B_B", [player, opponent, 0, 0, 0, 0], True, 4)
             ]
 
             two_dimensional_pattern_list = [
-                ("P_CROSS", [[-1, -1, 0, -1, -1],
-                             [-1, -1, player, -1, -1],
-                             [0, player, 0, player, 0],
-                             [-1, -1, player, -1, -1],
-                             [-1, -1, 0, -1, -1]], False, (2, 2)),
-                ("P_V_CROSS", [[-1, 0, -1, -1, -1],
-                               [0, 0, player, player, 0],
-                               [-1, player, - 1, -1, -1],
-                               [-1, player, - 1, -1, -1],
-                               [-1, 0, -1, -1, -1]], True, (1, 1)),
-                ("O_CROSS", [[-1, -1, 0, -1, -1],
-                             [-1, -1, opponent, -1, -1],
-                             [0, opponent, 0, opponent, 0],
-                             [-1, -1, opponent, -1, -1],
-                             [-1, -1, 0, -1, -1]], False, (2, 2)),
-                ("O_V_CROSS", [[-1, 0, -1, -1, -1],
-                               [0, 0, opponent, opponent, 0],
-                               [-1, opponent, - 1, -1, -1],
-                               [-1, opponent, - 1, -1, -1],
-                               [-1, 0, -1, -1, -1]], True, (1, 1)),
+                ("PLAYER_CROSS", [[-1, -1, 0, -1, -1],
+                                  [-1, -1, player, -1, -1],
+                                  [0, player, 0, player, 0],
+                                  [-1, -1, player, -1, -1],
+                                  [-1, -1, 0, -1, -1]], False, (2, 2)),
+                ("PLAYER_VERTICAL_CROSS", [[-1, 0, -1, -1, -1],
+                                           [0, 0, player, player, 0],
+                                           [-1, player, - 1, -1, -1],
+                                           [-1, player, - 1, -1, -1],
+                                           [-1, 0, -1, -1, -1]], True, (1, 1)),
+                ("OPPONENT_CROSS", [[-1, -1, 0, -1, -1],
+                                    [-1, -1, opponent, -1, -1],
+                                    [0, opponent, 0, opponent, 0],
+                                    [-1, -1, opponent, -1, -1],
+                                    [-1, -1, 0, -1, -1]], False, (2, 2)),
+                ("OPPONENT_VERTICAL_CROSS", [[-1, 0, -1, -1, -1],
+                                             [0, 0, opponent, opponent, 0],
+                                             [-1, opponent, - 1, -1, -1],
+                                             [-1, opponent, - 1, -1, -1],
+                                             [-1, 0, -1, -1, -1]], True, (1, 1)),
             ]
 
             one_dimensional_opponent_winning_pattern_list = [
-                ("O_WIN", [opponent, opponent, opponent, opponent, opponent], 4),
-                ("O_N_WIN", [opponent, opponent, opponent, opponent, 0], 3),
+                ("OPPONENT_WIN", [opponent, opponent, opponent, opponent, opponent], False, 4),
+                ("OPPONENT_NEARLY_WIN", [opponent, opponent, opponent, opponent, 0], True, 4),
             ]
 
             two_dimensional_opponent_winning_pattern_list = [
-                ("OC_N_WIN", [[-1, -1, 0, -1, -1],
-                              [-1, -1, opponent, -1, -1],
-                              [0, opponent, opponent, opponent, 0],
-                              [-1, -1, opponent, -1, -1],
-                              [-1, -1, 0, -1, -1]], False, (2, 2)),
-                ("OC_N_WIN", [[-1, 0, -1, -1, -1],
-                              [0, opponent, opponent, opponent, 0],
-                              [-1, opponent, - 1, -1, -1],
-                              [-1, opponent, - 1, -1, -1],
-                              [-1, 0, -1, -1, -1]], True, (1, 1))
+                ("OPPONENT_CROSS_NEARLY_WIN", [[-1, -1, 0, -1, -1],
+                                               [-1, -1, opponent, -1, -1],
+                                               [0, opponent, opponent, opponent, 0],
+                                               [-1, -1, opponent, -1, -1],
+                                               [-1, -1, 0, -1, -1]], False, (2, 2)),
+                ("OPPONENT_CROSS_NEARLY_WIN", [[-1, 0, -1, -1, -1],
+                                               [0, opponent, opponent, opponent, 0],
+                                               [-1, opponent, - 1, -1, -1],
+                                               [-1, opponent, - 1, -1, -1],
+                                               [-1, 0, -1, -1, -1]], True, (1, 1))
             ]
 
             for i in range(4, 19):
@@ -188,8 +182,8 @@ class StateAndReward:
                             number = self.one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
                             if number > 0:
                                 pattern_dictionary[key] += number
-                        for key, pattern, left_offset in one_dimensional_opponent_winning_pattern_list:
-                            number = self.one_dimensional_pattern_match(pattern, False, i, j, left_offset)
+                        for key, pattern, need_reverse, left_offset in one_dimensional_opponent_winning_pattern_list:
+                            number = self.one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
                             if number > 0:
                                 pattern_dictionary[key] += number
                         for key, pattern, need_rotate, (
@@ -203,36 +197,33 @@ class StateAndReward:
                             if number > 0:
                                 pattern_dictionary[key] += number
 
-            pattern_dictionary["BPPBPB"] /= 3
-            pattern_dictionary["PPBPP"] /= 4
-            pattern_dictionary["PPPBP"] /= 4
-            pattern_dictionary["BPPPB"] /= 3
-            pattern_dictionary["BPPB"] /= 2
-            pattern_dictionary["BPBPB"] /= 2
-            pattern_dictionary["OPPPPB"] /= 4
-            pattern_dictionary["OPPPB"] /= 3
-            pattern_dictionary["OPPB"] /= 2
-            pattern_dictionary["BOOBOB"] /= 3
-            pattern_dictionary["OOBOO"] /= 4
-            pattern_dictionary["OOOBO"] /= 4
-            pattern_dictionary["BOOOB"] /= 3
-            pattern_dictionary["BOOB"] /= 2
-            pattern_dictionary["BOBOB"] /= 2
-            pattern_dictionary["POOOOB"] /= 4
-            pattern_dictionary["POOOB"] /= 3
-            pattern_dictionary["POOB"] /= 2
-            pattern_dictionary["P_WIN"] /= 5
-            pattern_dictionary["P_N_WIN"] /= 4
-            pattern_dictionary["O_WIN"] /= 5
-            pattern_dictionary["O_N_WIN"] /= 4
-            if pattern_dictionary["PC_N_WIN"] % 2 == 0:
-                pattern_dictionary["PC_N_WIN"] /= 2
-            if pattern_dictionary["P_CROSS"] % 2 == 0:
-                pattern_dictionary["P_CROSS"] /= 2
-            if pattern_dictionary["OC_N_WIN"] % 2 == 0:
-                pattern_dictionary["OC_N_WIN"] /= 2
-            if pattern_dictionary["O_CROSS"] % 2 == 0:
-                pattern_dictionary["O_CROSS"] /= 2
+            pattern_dictionary["B_P_P_P_B"] /= 3
+            pattern_dictionary["B_P_P_B_B"] /= 2
+            pattern_dictionary["B_P_B_P_B"] /= 2
+            pattern_dictionary["O_P_P_P_P_B"] /= 4
+            pattern_dictionary["O_P_P_P_B_B"] /= 3
+            pattern_dictionary["O_P_P_B_B_B"] /= 2
+            pattern_dictionary["B_O_O_B_O_B"] /= 3
+            pattern_dictionary["O_O_B_O_O"] /= 4
+            pattern_dictionary["O_O_O_B_O"] /= 4
+            pattern_dictionary["B_O_O_O_B"] /= 3
+            pattern_dictionary["B_O_O_B_B"] /= 2
+            pattern_dictionary["B_O_B_O_B"] /= 2
+            pattern_dictionary["P_O_O_O_O_B"] /= 4
+            pattern_dictionary["P_O_O_O_B_B"] /= 3
+            pattern_dictionary["P_O_O_B_B_B"] /= 2
+            pattern_dictionary["PLAYER_WIN"] /= 5
+            pattern_dictionary["PLAYER_NEARLY_WIN"] /= 4
+            pattern_dictionary["OPPONENT_WIN"] /= 5
+            pattern_dictionary["OPPONENT_NEARLY_WIN"] /= 4
+            if pattern_dictionary["PLAYER_CROSS_NEARLY_WIN"] % 2 == 0:
+                pattern_dictionary["PLAYER_CROSS_NEARLY_WIN"] /= 2
+            if pattern_dictionary["PLAYER_CROSS"] % 2 == 0:
+                pattern_dictionary["PLAYER_CROSS"] /= 2
+            if pattern_dictionary["OPPONENT_CROSS_NEARLY_WIN"] % 2 == 0:
+                pattern_dictionary["OPPONENT_CROSS_NEARLY_WIN"] /= 2
+            if pattern_dictionary["OPPONENT_CROSS"] % 2 == 0:
+                pattern_dictionary["OPPONENT_CROSS"] /= 2
 
         return list(pattern_dictionary.values())
 
