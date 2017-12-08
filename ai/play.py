@@ -51,18 +51,16 @@ def next_move(is_training: bool) -> (int, int):
                     q_value = 0.0
                     if state in ai.state_list:
                         q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
+                    if q_value > ai.max_q:
+                        ai.max_q = q_value
                     next_move_result.append((position, state, q_value, reward))
             else:
                 next_move_result = copy.deepcopy(ai.next_result_list)
                 ai.next_result_list.clear()
 
-            max_q = -sys.maxsize - 1
             potential_next_move_greedy_result = []
-            for _, _, q_value, _ in next_move_result:
-                if q_value > max_q:
-                    max_q = q_value
             for position, state, q_value, reward in next_move_result:
-                if q_value == max_q:
+                if q_value == ai.max_q:
                     potential_next_move_greedy_result.append((position, state, q_value, reward))
             (next_x, next_y), next_state, _, next_r = potential_next_move_greedy_result[
                 np.random.randint(0, len(potential_next_move_greedy_result))]
@@ -93,16 +91,16 @@ def next_move(is_training: bool) -> (int, int):
                                                    ai.evaluate.get_2d_matching,
                                                    ai.evaluate.is_pattern_match,),
                                          modules=("numpy",)) for position in potential_move_list]
-            max_q = -sys.maxsize - 1
+            ai.max_q = -sys.maxsize - 1
             for job in jobs:
                 position, (state, reward) = job()
                 q_value = 0.0
                 if state in ai.state_list:
                     q_value = ai.q_matrix[ai.state_list.index(next_state), ai.state_list.index(state)]
-                if q_value > max_q:
-                    max_q = q_value
+                if q_value > ai.max_q:
+                    ai.max_q = q_value
                 ai.next_result_list.append((position, state, q_value, reward))
-            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - GAMMA * max_q
+            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - GAMMA * ai.max_q
 
         ai.last_state = next_state
 

@@ -2,6 +2,7 @@ import copy
 import os
 import pickle
 import shutil
+import sys
 import time
 import numpy as np
 import pp
@@ -10,6 +11,7 @@ import ai.play
 import ai.evaluate
 
 moves: int
+max_q: int
 winner: int
 black_wins: int
 white_wins: int
@@ -32,8 +34,9 @@ job_server = None
 
 
 def initialize():
-    global moves, chess, winner, last_state, q_matrix, next_result_list, state_record
+    global moves, max_q, chess, winner, last_state, q_matrix, next_result_list, state_record
     moves = 0
+    max_q = -sys.maxsize - 1
     winner = 0
     state_record = []
     next_result_list = []
