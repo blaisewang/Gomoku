@@ -4,6 +4,7 @@ import pickle
 import shutil
 import time
 import numpy as np
+import pp
 
 import ai.play
 import ai.evaluate
@@ -26,6 +27,9 @@ LOAD_TRAINING_FILE_PATH = "./output/"
 TRAINING_DATA_PATH = "/users/kaitok/gomoku/data/"
 MAX_BYTES = 2 ** 31 - 1
 
+pp_servers = None
+job_server = None
+
 
 def initialize():
     global moves, chess, winner, last_state, q_matrix, next_result_list, state_record
@@ -38,7 +42,7 @@ def initialize():
         for j in range(4, 19):
             chess[i][j] = 0
 
-    state, _ = evaluate.StateAndReward(chess, (11, 11)).get_state_and_reward()
+    _, (state, _) = evaluate.get_state_and_reward(chess, (11, 11))
     last_state = state
     if not state_list:
         state_list.append(state)
@@ -47,7 +51,7 @@ def initialize():
 
 def q_matrix_processing(args):
     global last_state, q_matrix
-    state, _ = evaluate.StateAndReward(copy.deepcopy(chess), args, moves).get_state_and_reward()
+    _, (state, _) = evaluate.get_state_and_reward(copy.deepcopy(chess), args, moves)
     if state not in state_list:
         q_matrix = np.row_stack((q_matrix, np.zeros(len(state_list))))
         state_list.append(state)
@@ -72,7 +76,7 @@ def remove_move(x: int, y: int):
 def has_winner(x: int, y: int):
     global winner
     player = 2 if moves % 2 == 0 else 1
-    if evaluate.StateAndReward(ai.chess, (x, y)).has_winner([player, player, player, player, player]):
+    if evaluate.has_winner(x, y, [player, player, player, player, player]):
         winner = player
 
 
@@ -145,9 +149,17 @@ def save_training_data(file_path: str) -> bool:
 
 
 def self_play_training(times: int):
-    global black_wins, white_wins, training_times
+    global pp_servers, job_server, black_wins, white_wins, training_times
     time_start = time.time()
     load_training_data(True)
+
+    pp_servers = (
+        "node191.prv.sciama.cluster:37180", "node144.prv.sciama.cluster:37180", "node143.prv.sciama.cluster:37180",
+        "node142.prv.sciama.cluster:37180", "node131.prv.sciama.cluster:37180")
+    job_server = pp.Server(ppservers=pp_servers, secret="Overdesirousness57-helicoid67")
+
+    # pp_servers = ()
+    # job_server = pp.Server(ppservers=pp_servers)
 
     black = 0
     white = 0
@@ -159,16 +171,18 @@ def self_play_training(times: int):
             add_move(x, y)
             state_record.append(last_state)
             has_winner(x, y)
-            if winner == 1:
-                black += 1
-                break
-            elif winner == 2:
-                white += 1
+            if winner != 0:
+                if winner == 1:
+                    black += 1
+                elif winner == 2:
+                    white += 1
                 break
         play.update_q(winner)
+        if i != 0 and (i + 1) % 500 == 0:
+            save_training_data(TRAINING_DATA_PATH + str(training_times + i + 1) + DATA_NAME)
         if i != 0 and (i + 1) % 100 == 0:
-            save_training_data(TRAINING_DATA_PATH + str(training_times + i) + DATA_NAME)
-        print(i + 1)
+            print("Trained:", i + 1, "Times")
+            ai.job_server.print_stats()
 
     black_wins += black
     white_wins += white

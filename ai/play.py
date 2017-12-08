@@ -1,8 +1,8 @@
 import copy
 import math
-import multiprocessing
-import numpy as np
 import sys
+
+import numpy as np
 
 import ai
 import ai.evaluate
@@ -11,20 +11,14 @@ EPSILON = 0.0015
 MAGNIFICATION_FACTOR = 10000
 GAMMA = 0.8
 
-chess: [[]]
-
 
 def next_move(is_training: bool) -> (int, int):
-    global chess
     next_move_result = []
-    potential_q_result = []
+    chess = copy.deepcopy(ai.chess)
     greedy_threshold = int(EPSILON * MAGNIFICATION_FACTOR)
 
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-
     if ai.moves == 0:
-        state, reward = ai.evaluate.StateAndReward(copy.deepcopy(ai.chess), (11, 11), ai.moves,
-                                                   True).get_state_and_reward()
+        _, (state, reward) = ai.evaluate.get_state_and_reward(copy.deepcopy(chess), (11, 11), ai.moves, True)
         if state not in ai.state_list:
             ai.q_matrix = np.row_stack((ai.q_matrix, np.zeros(len(ai.state_list))))
             ai.state_list.append(state)
@@ -34,7 +28,6 @@ def next_move(is_training: bool) -> (int, int):
         return 11, 11
     else:
         greedy = True
-        chess = copy.deepcopy(ai.chess)
         next_move_list = ai.get_boundary(chess)
 
         if is_training and ai.moves > 2:
@@ -43,11 +36,18 @@ def next_move(is_training: bool) -> (int, int):
 
         if greedy:
             if not ai.next_result_list:
-                result = []
-                for x, y in next_move_list:
-                    result.append(pool.apply_async(ai.evaluate.get_next_move_result, ((x, y), chess, ai.moves)))
-                for res in result:
-                    position, (state, reward) = res.get()
+                jobs = [ai.job_server.submit(ai.evaluate.get_state_and_reward,
+                                             args=(copy.deepcopy(chess), position, ai.moves, True,),
+                                             depfuncs=(ai.evaluate.get_state,
+                                                       ai.evaluate.get_reward,
+                                                       ai.evaluate.one_dimensional_pattern_match,
+                                                       ai.evaluate.get_1d_matching,
+                                                       ai.evaluate.two_dimensional_pattern_match,
+                                                       ai.evaluate.get_2d_matching,
+                                                       ai.evaluate.is_pattern_match,),
+                                             modules=("numpy",)) for position in next_move_list]
+                for job in jobs:
+                    position, (state, reward) = job()
                     q_value = 0.0
                     if state in ai.state_list:
                         q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
@@ -59,7 +59,8 @@ def next_move(is_training: bool) -> (int, int):
             max_q = -sys.maxsize - 1
             potential_next_move_greedy_result = []
             for _, _, q_value, _ in next_move_result:
-                max_q = q_value if q_value > max_q else max_q
+                if q_value > max_q:
+                    max_q = q_value
             for position, state, q_value, reward in next_move_result:
                 if q_value == max_q:
                     potential_next_move_greedy_result.append((position, state, q_value, reward))
@@ -71,8 +72,7 @@ def next_move(is_training: bool) -> (int, int):
             else:
                 available_move = ai.get_available_move()
                 next_x, next_y = available_move[np.random.randint(0, len(available_move))]
-            next_state, next_r = ai.evaluate.StateAndReward(copy.deepcopy(chess), (next_x, next_y),
-                                                            ai.moves).get_state_and_reward()
+            _, (next_state, next_r) = ai.evaluate.get_state_and_reward(copy.deepcopy(chess), (next_x, next_y), ai.moves)
 
         if is_training:
             if next_state not in ai.state_list:
@@ -83,21 +83,26 @@ def next_move(is_training: bool) -> (int, int):
             chess[next_x][next_y] = 2 if (ai.moves + 1) % 2 == 0 else 1
             potential_move_list = ai.get_boundary(chess)
 
-            result = []
-            for x, y in potential_move_list:
-                result.append(pool.apply_async(ai.evaluate.get_potential_q_result, ((x, y), chess, ai.moves)))
-            pool.close()
-            pool.join()
-            for res in result:
-                position, (state, reward) = res.get()
+            jobs = [ai.job_server.submit(ai.evaluate.get_state_and_reward,
+                                         args=(copy.deepcopy(chess), position, ai.moves + 1, True,),
+                                         depfuncs=(ai.evaluate.get_state,
+                                                   ai.evaluate.get_reward,
+                                                   ai.evaluate.one_dimensional_pattern_match,
+                                                   ai.evaluate.get_1d_matching,
+                                                   ai.evaluate.two_dimensional_pattern_match,
+                                                   ai.evaluate.get_2d_matching,
+                                                   ai.evaluate.is_pattern_match,),
+                                         modules=("numpy",)) for position in potential_move_list]
+            max_q = -sys.maxsize - 1
+            for job in jobs:
+                position, (state, reward) = job()
                 q_value = 0.0
                 if state in ai.state_list:
                     q_value = ai.q_matrix[ai.state_list.index(next_state), ai.state_list.index(state)]
-                potential_q_result.append(q_value)
+                if q_value > max_q:
+                    max_q = q_value
                 ai.next_result_list.append((position, state, q_value, reward))
-
-            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - GAMMA * max(
-                potential_q_result)
+            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - GAMMA * max_q
 
         ai.last_state = next_state
 
