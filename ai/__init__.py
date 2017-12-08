@@ -194,4 +194,4 @@ def self_play_training(times: int):
         print("Save training data failed")
 
     print("Cost", time.time() - time_start, "s")
-    print("Black wins", black, " times, White wins", white, " times")
+    print("Black wins", black_wins, "times, White wins", white_wins, "times")
