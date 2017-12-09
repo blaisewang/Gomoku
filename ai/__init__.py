@@ -1,7 +1,6 @@
 import copy
 import os
 import pickle
-import shutil
 import sys
 import time
 import numpy as np
@@ -79,7 +78,7 @@ def remove_move(x: int, y: int):
 def has_winner(x: int, y: int):
     global winner
     player = 2 if moves % 2 == 0 else 1
-    if evaluate.has_winner(x, y, [player, player, player, player, player]):
+    if evaluate.has_winner(x, y, [player, player, player, player, player], copy.deepcopy(chess)):
         winner = player
 
 
@@ -126,7 +125,6 @@ def load_training_data(is_training: bool) -> bool:
                 bytes_in += file_in.read(MAX_BYTES)
         (training_times, black_wins, white_wins), state_list, q_matrix = pickle.loads(bytes_in)
         file_in.close()
-        shutil.copyfile(file_path, file_path + ".backup")
         return True
     except IOError as error:
         print(error)
@@ -156,18 +154,19 @@ def self_play_training(times: int):
     time_start = time.time()
     load_training_data(True)
 
-    pp_servers = (
-        "node191.prv.sciama.cluster:37180", "node144.prv.sciama.cluster:37180", "node143.prv.sciama.cluster:37180",
-        "node142.prv.sciama.cluster:37180", "node131.prv.sciama.cluster:37180")
-    job_server = pp.Server(ppservers=pp_servers, secret="Overdesirousness57-helicoid67")
+    # pp_servers = (
+    #     "node182.prv.sciama.cluster:37180", "node171.prv.sciama.cluster:37180", "node170.prv.sciama.cluster:37180",
+    #     "node169.prv.sciama.cluster:37180", "node164.prv.sciama.cluster:37180")
+    # job_server = pp.Server(ppservers=pp_servers, secret="Overdesirousness57-helicoid67")
 
-    # pp_servers = ()
-    # job_server = pp.Server(ppservers=pp_servers)
+    pp_servers = ()
+    job_server = pp.Server(ppservers=pp_servers)
 
     black = 0
     white = 0
 
     for i in range(times):
+        print(i + training_times + 1)
         initialize()
         while moves <= 255:
             x, y = play.next_move(True)
@@ -181,15 +180,14 @@ def self_play_training(times: int):
                     white += 1
                 break
         play.update_q(winner)
-        if i != 0 and (i + 1) % 500 == 0:
+        if (i + 1) % 50 == 0:
             save_training_data(TRAINING_DATA_PATH + str(training_times + i + 1) + DATA_NAME)
-        if i != 0 and (i + 1) % 100 == 0:
-            print("Trained:", i + 1, "Times")
-            ai.job_server.print_stats()
 
     black_wins += black
     white_wins += white
     training_times += times
+
+    job_server.print_stats()
 
     if save_training_data(TRAINING_DATA_PATH + DATA_NAME):
         print("Has been trained", training_times, "times")

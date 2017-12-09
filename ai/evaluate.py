@@ -1,7 +1,4 @@
-import copy
 import numpy
-
-import ai
 
 
 def get_state_and_reward(chess, args, moves=0, is_simulate=False) -> ():
@@ -292,8 +289,8 @@ def get_reward(x: int, y: int, move: int, chess: [[]]) -> int:
     return reward
 
 
-def has_winner(x: int, y: int, pattern: []) -> bool:
-    return one_dimensional_pattern_match(pattern, copy.deepcopy(ai.chess), False, x, y, 4) > 0
+def has_winner(x: int, y: int, pattern: [], chess: [[]]) -> bool:
+    return one_dimensional_pattern_match(pattern, chess, False, x, y, 4) > 0
 
 
 def get_1d_matching(pattern: [], chess: [[]], x: int, y: int, l_ofs: int, r_ofs: int) -> int:
