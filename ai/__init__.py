@@ -154,11 +154,6 @@ def self_play_training(times: int):
     time_start = time.time()
     load_training_data(True)
 
-    # pp_servers = (
-    #     "node182.prv.sciama.cluster:37180", "node171.prv.sciama.cluster:37180", "node170.prv.sciama.cluster:37180",
-    #     "node169.prv.sciama.cluster:37180", "node164.prv.sciama.cluster:37180")
-    # job_server = pp.Server(ppservers=pp_servers, secret="Overdesirousness57-helicoid67")
-
     pp_servers = ()
     job_server = pp.Server(ppservers=pp_servers)
 
