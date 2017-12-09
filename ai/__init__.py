@@ -4,7 +4,6 @@ import pickle
 import sys
 import time
 import numpy as np
-import pp
 
 import ai.play
 import ai.evaluate
@@ -151,17 +150,14 @@ def save_training_data(file_path: str) -> bool:
 
 def self_play_training(times: int):
     global pp_servers, job_server, black_wins, white_wins, training_times
-    time_start = time.time()
+    start_time = time.time()
+    last_time = time.time()
     load_training_data(True)
-
-    pp_servers = ()
-    job_server = pp.Server(ppservers=pp_servers)
 
     black = 0
     white = 0
 
     for i in range(times):
-        print(i + training_times + 1)
         initialize()
         while moves <= 255:
             x, y = play.next_move(True)
@@ -177,6 +173,8 @@ def self_play_training(times: int):
         play.update_q(winner)
         if (i + 1) % 50 == 0:
             save_training_data(TRAINING_DATA_PATH + str(training_times + i + 1) + DATA_NAME)
+        print(i + 1, ":", time.time() - last_time)
+        last_time = time.time()
 
     black_wins += black
     white_wins += white
@@ -189,5 +187,5 @@ def self_play_training(times: int):
     else:
         print("Save training data failed")
 
-    print("Cost", time.time() - time_start, "s")
+    print("Cost", time.time() - start_time, "s")
     print("Black wins", black_wins, "times, White wins", white_wins, "times")
