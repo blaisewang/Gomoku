@@ -155,12 +155,13 @@ def self_play_training(times: int):
     black = 0
     white = 0
 
+    print("")
     for i in range(times):
+        game_number = training_times + i + 1
         initialize()
         while moves <= 255:
             x, y = play.next_move(True)
             add_move(x, y)
-            print(x, y)
             state_record.append(last_state)
             has_winner(x, y)
             if winner != 0:
@@ -170,9 +171,9 @@ def self_play_training(times: int):
                     white += 1
                 break
         play.update_q(winner)
-        if (i + 1) % 25 == 0:
-            save_training_data(TRAINING_DATA_PATH + str(training_times + i + 1) + DATA_NAME)
-        print(i + 1, "Cost", time.time() - last_time, "s")
+        if game_number % 50 == 0:
+            save_training_data(TRAINING_DATA_PATH + str(game_number) + DATA_NAME)
+        print("No.", game_number, "Game. Moves:", moves, "Cost", time.time() - last_time, "s")
         last_time = time.time()
 
     black_wins += black
@@ -185,4 +186,4 @@ def self_play_training(times: int):
         print("Save training data failed")
 
     print("Cost", time.time() - start_time, "s")
-    print("Black wins", black_wins, "times, White wins", white_wins, "times")
+    print("Black wins", black_wins, "times, White wins", white_wins, "times\n")
