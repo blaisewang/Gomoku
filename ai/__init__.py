@@ -27,9 +27,6 @@ LOAD_TRAINING_FILE_PATH = "./output/"
 TRAINING_DATA_PATH = "/users/kaitok/gomoku/data/"
 MAX_BYTES = 2 ** 31 - 1
 
-pp_servers = None
-job_server = None
-
 
 def initialize():
     global moves, max_q, chess, winner, last_state, q_matrix, next_result_list, state_record
@@ -43,7 +40,7 @@ def initialize():
         for j in range(4, 19):
             chess[i][j] = 0
 
-    _, (state, _) = evaluate.get_state_and_reward(chess, (11, 11))
+    _, (state, _) = evaluate.get_state_and_reward((chess, (11, 11), 0, False))
     last_state = state
     if not state_list:
         state_list.append(state)
@@ -52,7 +49,7 @@ def initialize():
 
 def q_matrix_processing(args):
     global last_state, q_matrix
-    _, (state, _) = evaluate.get_state_and_reward(copy.deepcopy(chess), args, moves)
+    _, (state, _) = evaluate.get_state_and_reward((copy.deepcopy(chess), args, moves, False))
     if state not in state_list:
         q_matrix = np.row_stack((q_matrix, np.zeros(len(state_list))))
         state_list.append(state)
@@ -77,7 +74,8 @@ def remove_move(x: int, y: int):
 def has_winner(x: int, y: int):
     global winner
     player = 2 if moves % 2 == 0 else 1
-    if evaluate.has_winner(x, y, [player, player, player, player, player], copy.deepcopy(chess)):
+    if ai.evaluate.one_dimensional_pattern_match([player, player, player, player, player], copy.deepcopy(chess), False,
+                                                 x, y, 4) > 0:
         winner = player
 
 
@@ -149,7 +147,7 @@ def save_training_data(file_path: str) -> bool:
 
 
 def self_play_training(times: int):
-    global pp_servers, job_server, black_wins, white_wins, training_times
+    global black_wins, white_wins, training_times
     start_time = time.time()
     last_time = time.time()
     load_training_data(True)
@@ -162,6 +160,7 @@ def self_play_training(times: int):
         while moves <= 255:
             x, y = play.next_move(True)
             add_move(x, y)
+            print(x, y)
             state_record.append(last_state)
             has_winner(x, y)
             if winner != 0:
@@ -171,16 +170,14 @@ def self_play_training(times: int):
                     white += 1
                 break
         play.update_q(winner)
-        if (i + 1) % 50 == 0:
+        if (i + 1) % 25 == 0:
             save_training_data(TRAINING_DATA_PATH + str(training_times + i + 1) + DATA_NAME)
-        print(i + 1, ":", time.time() - last_time)
+        print(i + 1, "Cost", time.time() - last_time, "s")
         last_time = time.time()
 
     black_wins += black
     white_wins += white
     training_times += times
-
-    job_server.print_stats()
 
     if save_training_data(TRAINING_DATA_PATH + DATA_NAME):
         print("Has been trained", training_times, "times")

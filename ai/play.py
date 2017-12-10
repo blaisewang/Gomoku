@@ -5,6 +5,7 @@ import os
 import sys
 
 import numpy as np
+import scoop.futures
 
 import ai
 import ai.evaluate
@@ -22,7 +23,7 @@ def next_move(is_training: bool) -> (int, int):
     pool = multiprocessing.Pool(processes=os.cpu_count())
 
     if ai.moves == 0:
-        _, (state, reward) = ai.evaluate.get_state_and_reward(copy.deepcopy(chess), (11, 11), ai.moves, True)
+        _, (state, reward) = ai.evaluate.get_state_and_reward((copy.deepcopy(chess), (11, 11), ai.moves, True))
         if state not in ai.state_list:
             ai.q_matrix = np.row_stack((ai.q_matrix, np.zeros(len(ai.state_list))))
             ai.state_list.append(state)
@@ -40,18 +41,31 @@ def next_move(is_training: bool) -> (int, int):
 
         if greedy:
             if not ai.next_result_list:
-                results = []
-                for position in next_move_list:
-                    results.append(pool.apply_async(ai.evaluate.get_state_and_reward,
-                                                    (copy.deepcopy(chess), position, ai.moves, True)))
-                for result in results:
-                    position, (state, reward) = result.get()
-                    q_value = 0.0
-                    if state in ai.state_list:
-                        q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
-                    if q_value > ai.max_q:
-                        ai.max_q = q_value
-                    next_move_result.append((position, state, q_value, reward))
+                if is_training:
+                    results = list(scoop.futures.map(ai.evaluate.get_state_and_reward,
+                                                     [(copy.deepcopy(chess), position, ai.moves, True) for position in
+                                                      next_move_list]))
+                    for result in results:
+                        position, (state, reward) = result
+                        q_value = 0.0
+                        if state in ai.state_list:
+                            q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
+                        if q_value > ai.max_q:
+                            ai.max_q = q_value
+                        next_move_result.append((position, state, q_value, reward))
+                else:
+                    results = []
+                    for position in next_move_list:
+                        results.append(pool.apply_async(ai.evaluate.get_state_and_reward,
+                                                        ((copy.deepcopy(chess), position, ai.moves, True),)))
+                    for result in results:
+                        position, (state, reward) = result.get()
+                        q_value = 0.0
+                        if state in ai.state_list:
+                            q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
+                        if q_value > ai.max_q:
+                            ai.max_q = q_value
+                        next_move_result.append((position, state, q_value, reward))
             else:
                 next_move_result = copy.deepcopy(ai.next_result_list)
                 ai.next_result_list.clear()
@@ -69,7 +83,8 @@ def next_move(is_training: bool) -> (int, int):
             else:
                 available_move = ai.get_available_move()
                 next_x, next_y = available_move[np.random.randint(0, len(available_move))]
-            _, (next_state, next_r) = ai.evaluate.get_state_and_reward(copy.deepcopy(chess), (next_x, next_y), ai.moves)
+            _, (next_state, next_r) = ai.evaluate.get_state_and_reward(
+                (copy.deepcopy(chess), (next_x, next_y), ai.moves))
 
         if is_training:
             if next_state not in ai.state_list:
@@ -80,12 +95,11 @@ def next_move(is_training: bool) -> (int, int):
             chess[next_x][next_y] = 2 if (ai.moves + 1) % 2 == 0 else 1
             potential_move_list = ai.get_boundary(chess)
 
-            results = []
-            for position in potential_move_list:
-                results.append(pool.apply_async(ai.evaluate.get_state_and_reward,
-                                                (copy.deepcopy(chess), position, ai.moves + 1, True)))
+            results = list(scoop.futures.map_as_completed(ai.evaluate.get_state_and_reward,
+                                                          [(copy.deepcopy(chess), position, ai.moves + 1, True) for
+                                                           position in potential_move_list]))
             for result in results:
-                position, (state, reward) = result.get()
+                position, (state, reward) = result
                 q_value = 0.0
                 if state in ai.state_list:
                     q_value = ai.q_matrix[ai.state_list.index(next_state), ai.state_list.index(state)]
@@ -100,27 +114,23 @@ def next_move(is_training: bool) -> (int, int):
 
 
 def update_q(winner: int):
-    draw_penalty = 0.05
+    draw_penalty = 0.1
 
     if winner == 1:
         length = len(ai.state_record) - 1
         for i in range(1, length - 2, 2):
-            last_state = ai.state_record[length - i - 1]
-            state = ai.state_record[length - i]
-            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(int((i - 1) / 2))
+            ai.q_matrix[ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
+                ai.state_record[length - i])] -= bias_function(int((i - 1) / 2))
     elif winner == 2:
         length = len(ai.state_record) - 1
         for i in range(1, length - 1, 2):
-            last_state = ai.state_record[length - i - 1]
-            state = ai.state_record[length - i]
-            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= bias_function(int((i - 1) / 2))
+            ai.q_matrix[ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
+                ai.state_record[length - i])] -= bias_function(int((i - 1) / 2))
     else:
         length = len(ai.state_record) - 1
         for i in range(0, length - 1):
-            last_state = ai.state_record[length - i - 1]
-            state = ai.state_record[length - i]
-            ai.q_matrix[ai.state_list.index(last_state), ai.state_list.index(state)] -= draw_penalty * bias_function(
-                int((i - 1) / 2))
+            ai.q_matrix[ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
+                ai.state_record[length - i])] -= draw_penalty * bias_function(int((i - 1) / 2))
 
 
 def bias_function(step: int) -> float:

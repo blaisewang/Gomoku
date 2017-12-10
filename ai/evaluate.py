@@ -1,12 +1,12 @@
 import numpy
 
 
-def get_state_and_reward(chess, args, moves=0, is_simulate=False) -> ():
-    x, y = args
+def get_state_and_reward(args: ()) -> ():
+    chess, (x, y), moves, is_simulate = args
     if is_simulate:
+        moves += 1
         chess[x][y] = 2 if moves % 2 == 0 else 1
-
-    return args, (get_state(moves, chess), get_reward(x, y, moves, chess))
+    return (x, y), (get_state(moves, chess), get_reward(x, y, moves, chess))
 
 
 def get_state(move: int, chess: [[]]) -> []:
@@ -205,18 +205,18 @@ def get_state(move: int, chess: [[]]) -> []:
     return list(pattern_dictionary.values())
 
 
-def get_reward(x: int, y: int, move: int, chess: [[]]) -> int:
-    if move == 0:
+def get_reward(x: int, y: int, moves: int, chess: [[]]) -> int:
+    if moves == 0:
         return 0
-    elif move == 1:
+    elif moves == 1:
         if x == 11 and y == 11:
             return 100
         else:
             return 0
 
     reward = 0
-    player = 2 if move % 2 == 0 else 1
-    opponent = 1 if player == 1 else 2
+    player = 2 if moves % 2 == 0 else 1
+    opponent = 2 if player == 1 else 1
 
     one_dimensional_player_winning_pattern_list = [
         ("PLAYER_WIN", [player, player, player, player, player], 4),
@@ -287,10 +287,6 @@ def get_reward(x: int, y: int, move: int, chess: [[]]) -> int:
     for _, pattern, need_reverse, left_offset, expect_reward in one_dimensional_player_pattern_list:
         reward += expect_reward * one_dimensional_pattern_match(pattern, chess, need_reverse, x, y, left_offset)
     return reward
-
-
-def has_winner(x: int, y: int, pattern: [], chess: [[]]) -> bool:
-    return one_dimensional_pattern_match(pattern, chess, False, x, y, 4) > 0
 
 
 def get_1d_matching(pattern: [], chess: [[]], x: int, y: int, l_ofs: int, r_ofs: int) -> int:
