@@ -24,7 +24,7 @@ state_record = []
 
 DATA_NAME = "training.data"
 LOAD_TRAINING_FILE_PATH = "./output/"
-TRAINING_DATA_PATH = "/users/kaitok/gomoku/data/"
+TRAINING_DATA_PATH = "/users/kaitok/gomoku/output/"
 MAX_BYTES = 2 ** 31 - 1
 
 
@@ -133,29 +133,26 @@ def load_training_data(is_training: bool) -> bool:
         return False
 
 
-def save_training_data(file_path: str) -> bool:
+def save_training_data(file_path: str):
     bytes_out = pickle.dumps(((training_times, black_wins, white_wins), state_list, q_matrix))
     try:
         with open(file_path, 'wb') as file_out:
             for i in range(0, len(bytes_out), MAX_BYTES):
                 file_out.write(bytes_out[i: i + MAX_BYTES])
             file_out.close()
-            return True
     except IOError as error:
-        print(error)
-        return False
+        print("Failed to save the data.", error)
 
 
 def self_play_training(times: int):
     global black_wins, white_wins, training_times
-    start_time = time.time()
-    last_time = time.time()
-    load_training_data(True)
-
     black = 0
     white = 0
+    start_time = time.time()
+    last_time = time.time()
 
     print("")
+    load_training_data(True)
     for i in range(times):
         game_number = training_times + i + 1
         initialize()
@@ -173,17 +170,14 @@ def self_play_training(times: int):
         play.update_q(winner)
         if game_number % 50 == 0:
             save_training_data(TRAINING_DATA_PATH + str(game_number) + DATA_NAME)
-        print("No.", game_number, "Game. Moves:", moves, "Cost", time.time() - last_time, "s")
+        print("No.", game_number, "Moves:", moves, "Cost", time.time() - last_time, "s")
         last_time = time.time()
 
     black_wins += black
     white_wins += white
     training_times += times
 
-    if save_training_data(TRAINING_DATA_PATH + DATA_NAME):
-        print("Has been trained", training_times, "times")
-    else:
-        print("Save training data failed")
+    save_training_data(TRAINING_DATA_PATH + DATA_NAME)
 
     print("Cost", time.time() - start_time, "s")
     print("Black wins", black_wins, "times, White wins", white_wins, "times\n")
