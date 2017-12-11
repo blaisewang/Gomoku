@@ -3,7 +3,8 @@ import pickle
 import sys
 import time
 
-import pp
+# import multiprocessing
+
 import numpy as np
 
 import ai.play
@@ -17,6 +18,8 @@ white_wins: int
 training_times: int
 chess: [[]]
 
+# pool = multiprocessing.Pool(processes=os.cpu_count())
+
 last_state: []
 state_list: []
 next_result_list = []
@@ -24,11 +27,9 @@ q_matrix: np.matrix
 state_record = []
 
 DATA_NAME = "training.data"
-LOAD_TRAINING_FILE_PATH = "./output/"
-TRAINING_DATA_PATH = "/users/kaitok/gomoku/output/"
+LOAD_TRAINING_FILE_PATH = "./data/"
+TRAINING_DATA_PATH = "/users/kaitok/gomoku/data/"
 MAX_BYTES = 2 ** 31 - 1
-
-job_server = None
 
 
 def initialize():
@@ -147,24 +148,20 @@ def save_training_data(file_path: str):
 
 
 def self_play_training(times: int):
-    global job_server, black_wins, white_wins, training_times
+    global black_wins, white_wins, training_times
     black = 0
     white = 0
     start_time = time.time()
     last_time = time.time()
-
-    pp_servers = ()
-    job_server = pp.Server(ppservers=pp_servers)
 
     print("")
     load_training_data(True)
     for i in range(times):
         game_number = training_times + i + 1
         initialize()
-        while moves <= 255:
+        while moves <= 225:
             x, y = play.next_move(True)
             add_move(x, y)
-            print(x, y)
             state_record.append(last_state)
             has_winner(x, y)
             if winner != 0:
@@ -174,9 +171,8 @@ def self_play_training(times: int):
                     white += 1
                 break
         play.update_q(winner)
-        if game_number % 10 == 0:
-            save_training_data(TRAINING_DATA_PATH + str(game_number) + DATA_NAME)
-        job_server.print_stats()
+        if game_number % 100 == 0:
+            save_training_data(TRAINING_DATA_PATH + DATA_NAME + "." + str(game_number))
         print("No.", game_number, "Moves:", moves, "Cost", time.time() - last_time, "s")
         last_time = time.time()
 
@@ -184,7 +180,6 @@ def self_play_training(times: int):
     white_wins += white
     training_times += times
 
-    job_server.print_stats()
     save_training_data(TRAINING_DATA_PATH + DATA_NAME)
 
     print("Cost", time.time() - start_time, "s")
