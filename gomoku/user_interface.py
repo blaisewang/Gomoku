@@ -3,7 +3,6 @@ import multiprocessing
 import wx
 
 import ai
-import ai.play
 import ai.evaluate
 
 WIN_WIDTH = 1024
@@ -39,7 +38,6 @@ class GomokuFrame(wx.Frame):
 
     moves = 0
     current_move = 0
-    winner = 0
     is_banner_displayed = False
 
     def __init__(self):
@@ -118,7 +116,6 @@ class GomokuFrame(wx.Frame):
 
     def on_ai_play_button_click(self, _):
         x, y = ai.play.next_move(False)
-        ai.add_move(x, y)
         self.draw_move(y, x)
         if ai.moves == 255 or ai.winner != 0:
             self.ai_play_button.Disable()

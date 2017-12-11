@@ -1,8 +1,9 @@
-import copy
 import os
 import pickle
 import sys
 import time
+
+import pp
 import numpy as np
 
 import ai.play
@@ -27,6 +28,8 @@ LOAD_TRAINING_FILE_PATH = "./output/"
 TRAINING_DATA_PATH = "/users/kaitok/gomoku/output/"
 MAX_BYTES = 2 ** 31 - 1
 
+job_server = None
+
 
 def initialize():
     global moves, max_q, chess, winner, last_state, q_matrix, next_result_list, state_record
@@ -40,7 +43,7 @@ def initialize():
         for j in range(4, 19):
             chess[i][j] = 0
 
-    _, (state, _) = evaluate.get_state_and_reward((chess, (11, 11), 0, False))
+    _, (state, _) = evaluate.get_state_and_reward(((11, 11), chess, moves, False))
     last_state = state
     if not state_list:
         state_list.append(state)
@@ -49,7 +52,7 @@ def initialize():
 
 def q_matrix_processing(args):
     global last_state, q_matrix
-    _, (state, _) = evaluate.get_state_and_reward((copy.deepcopy(chess), args, moves, False))
+    _, (state, _) = evaluate.get_state_and_reward((args, chess, moves, False))
     if state not in state_list:
         q_matrix = np.row_stack((q_matrix, np.zeros(len(state_list))))
         state_list.append(state)
@@ -74,24 +77,23 @@ def remove_move(x: int, y: int):
 def has_winner(x: int, y: int):
     global winner
     player = 2 if moves % 2 == 0 else 1
-    if ai.evaluate.one_dimensional_pattern_match([player, player, player, player, player], copy.deepcopy(chess), False,
-                                                 x, y, 4) > 0:
+    if ai.evaluate.has_winner(x, y, player):
         winner = player
 
 
-def get_boundary(chess_copy: [[]]) -> []:
+def get_boundary() -> []:
     boundary_list = []
     for i in range(4, 19):
         for j in range(4, 19):
-            if chess_copy[i][j] == 0:
-                if (chess_copy[i - 1][j - 1] == 1 or chess_copy[i - 1][j - 1] == 2) or (
-                        chess_copy[i - 1][j] == 1 or chess_copy[i - 1][j] == 2) or (
-                        chess_copy[i - 1][j + 1] == 1 or chess_copy[i - 1][j + 1] == 2) or (
-                        chess_copy[i][j - 1] == 1 or chess_copy[i][j - 1] == 2) or (
-                        chess_copy[i][j + 1] == 1 or chess_copy[i][j + 1] == 2) or (
-                        chess_copy[i + 1][j - 1] == 1 or chess_copy[i + 1][j - 1] == 2) or (
-                        chess_copy[i + 1][j] == 1 or chess_copy[i + 1][j] == 2) or (
-                        chess_copy[i + 1][j + 1] == 1 or chess_copy[i + 1][j + 1] == 2):
+            if chess[i][j] == 0:
+                if (chess[i - 1][j - 1] == 1 or chess[i - 1][j - 1] == 2) or (
+                        chess[i - 1][j] == 1 or chess[i - 1][j] == 2) or (
+                        chess[i - 1][j + 1] == 1 or chess[i - 1][j + 1] == 2) or (
+                        chess[i][j - 1] == 1 or chess[i][j - 1] == 2) or (
+                        chess[i][j + 1] == 1 or chess[i][j + 1] == 2) or (
+                        chess[i + 1][j - 1] == 1 or chess[i + 1][j - 1] == 2) or (
+                        chess[i + 1][j] == 1 or chess[i + 1][j] == 2) or (
+                        chess[i + 1][j + 1] == 1 or chess[i + 1][j + 1] == 2):
                     boundary_list.append((i, j))
     return boundary_list
 
@@ -145,11 +147,14 @@ def save_training_data(file_path: str):
 
 
 def self_play_training(times: int):
-    global black_wins, white_wins, training_times
+    global job_server, black_wins, white_wins, training_times
     black = 0
     white = 0
     start_time = time.time()
     last_time = time.time()
+
+    pp_servers = ()
+    job_server = pp.Server(ppservers=pp_servers)
 
     print("")
     load_training_data(True)
@@ -159,6 +164,7 @@ def self_play_training(times: int):
         while moves <= 255:
             x, y = play.next_move(True)
             add_move(x, y)
+            print(x, y)
             state_record.append(last_state)
             has_winner(x, y)
             if winner != 0:

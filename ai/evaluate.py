@@ -1,16 +1,24 @@
 import numpy
 
+import ai
 
-def get_state_and_reward(args: ()) -> ():
-    chess, (x, y), moves, is_simulate = args
+moves: int
+chess = [[]]
+
+
+def get_state_and_reward(args: ((int, int), [[]], int, bool)) -> ((int, int), [], int):
+    global moves, chess
+    (x, y), chess, moves, is_simulate = args
+
     if is_simulate:
         moves += 1
         chess[x][y] = 2 if moves % 2 == 0 else 1
-    return (x, y), (get_state(moves, chess), get_reward(x, y, moves, chess))
+
+    return (x, y), (get_state(), get_reward(x, y))
 
 
-def get_state(move: int, chess: [[]]) -> []:
-    player = 2 if move % 2 == 0 else 1
+def get_state() -> []:
+    player = 2 if moves % 2 == 0 else 1
     opponent = 2 if player == 1 else 1
 
     pattern_dictionary = {
@@ -51,9 +59,9 @@ def get_state(move: int, chess: [[]]) -> []:
         "START": 0.0
     }
 
-    if move == 0:
+    if moves == 0:
         return list(pattern_dictionary.values())
-    if move == 1:
+    if moves == 1:
         pattern_dictionary["START"] = 1.0
     else:
         one_dimensional_player_pattern_list = [
@@ -142,35 +150,35 @@ def get_state(move: int, chess: [[]]) -> []:
             for j in range(4, 19):
                 if chess[i][j] == player:
                     for key, pattern, need_reverse, left_offset, _ in one_dimensional_player_pattern_list:
-                        number = one_dimensional_pattern_match(pattern, chess, need_reverse, i, j, left_offset)
+                        number = one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
                         if number > 0:
                             pattern_dictionary[key] += number
                     for key, pattern, left_offset in one_dimensional_player_winning_pattern_list:
-                        number = one_dimensional_pattern_match(pattern, chess, False, i, j, left_offset)
+                        number = one_dimensional_pattern_match(pattern, False, i, j, left_offset)
                         if number > 0:
                             pattern_dictionary[key] += number
                     for key, pattern, need_rotate, (
                             anchor_x, anchor_y) in two_dimensional_player_winning_pattern_list:
-                        number = two_dimensional_pattern_match(pattern, chess, need_rotate, i, j, anchor_x, anchor_y)
+                        number = two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x, anchor_y)
                         if number > 0:
                             pattern_dictionary[key] += number
                 elif chess[i][j] == opponent:
                     for key, pattern, need_reverse, left_offset in one_dimensional_opponent_pattern_list:
-                        number = one_dimensional_pattern_match(pattern, chess, need_reverse, i, j, left_offset)
+                        number = one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
                         if number > 0:
                             pattern_dictionary[key] += number
                     for key, pattern, need_reverse, left_offset in one_dimensional_opponent_winning_pattern_list:
-                        number = one_dimensional_pattern_match(pattern, chess, need_reverse, i, j, left_offset)
+                        number = one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
                         if number > 0:
                             pattern_dictionary[key] += number
                     for key, pattern, need_rotate, (
                             anchor_x, anchor_y) in two_dimensional_opponent_winning_pattern_list:
-                        number = two_dimensional_pattern_match(pattern, chess, need_rotate, i, j, anchor_x, anchor_y)
+                        number = two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x, anchor_y)
                         if number > 0:
                             pattern_dictionary[key] += number
                 else:
                     for key, pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_pattern_list:
-                        number = two_dimensional_pattern_match(pattern, chess, need_rotate, i, j, anchor_x, anchor_y)
+                        number = two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x, anchor_y)
                         if number > 0:
                             pattern_dictionary[key] += number
 
@@ -205,7 +213,7 @@ def get_state(move: int, chess: [[]]) -> []:
     return list(pattern_dictionary.values())
 
 
-def get_reward(x: int, y: int, moves: int, chess: [[]]) -> int:
+def get_reward(x: int, y: int) -> int:
     if moves == 0:
         return 0
     elif moves == 1:
@@ -269,27 +277,27 @@ def get_reward(x: int, y: int, moves: int, chess: [[]]) -> int:
     ]
 
     for _, pattern, left_offset in one_dimensional_player_winning_pattern_list:
-        if one_dimensional_pattern_match(pattern, chess, False, x, y, left_offset):
+        if one_dimensional_pattern_match(pattern, False, x, y, left_offset):
             return 100
 
     for pattern, left_offset, right_offset in one_dimensional_dangerous_pattern_list:
-        if one_dimensional_pattern_match(pattern, chess, True, x, y, left_offset, right_offset):
+        if one_dimensional_pattern_match(pattern, True, x, y, left_offset, right_offset):
             return 100
 
     for _, pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_player_winning_pattern_list:
-        if two_dimensional_pattern_match(pattern, chess, need_rotate, x, y, anchor_x, anchor_y):
+        if two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y):
             return 100
 
     for pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_dangerous_pattern_list:
-        if two_dimensional_pattern_match(pattern, chess, need_rotate, x, y, anchor_x, anchor_y):
+        if two_dimensional_pattern_match(pattern, need_rotate, x, y, anchor_x, anchor_y):
             return 100
 
     for _, pattern, need_reverse, left_offset, expect_reward in one_dimensional_player_pattern_list:
-        reward += expect_reward * one_dimensional_pattern_match(pattern, chess, need_reverse, x, y, left_offset)
+        reward += expect_reward * one_dimensional_pattern_match(pattern, need_reverse, x, y, left_offset)
     return reward
 
 
-def get_1d_matching(pattern: [], chess: [[]], x: int, y: int, l_ofs: int, r_ofs: int) -> int:
+def get_1d_matching(pattern: [], x: int, y: int, l_ofs: int, r_ofs: int) -> int:
     diff = y - x
     rot = x - 22 + y
     bias = 0 if diff <= 0 else abs(diff)
@@ -302,19 +310,18 @@ def get_1d_matching(pattern: [], chess: [[]], x: int, y: int, l_ofs: int, r_ofs:
                 numpy.diagonal(numpy.rot90(chess), offset=rot)[x - rot_bias - l_ofs:x - rot_bias + r_ofs]])))
 
 
-def one_dimensional_pattern_match(pattern: [], chess: [[]], need_reverse: bool, x: int, y: int, l_ofs: int,
-                                  *r_offset: int) -> int:
+def one_dimensional_pattern_match(pattern: [], need_reverse: bool, x: int, y: int, l_ofs: int, *r_offset: int) -> int:
     if len(r_offset) == 0:
         r_ofs = l_ofs + 1
     else:
         r_ofs = r_offset[0]
-    number = get_1d_matching(pattern, chess, x, y, l_ofs, r_ofs)
+    number = get_1d_matching(pattern, x, y, l_ofs, r_ofs)
     if need_reverse:
-        number += get_1d_matching(list(reversed(pattern)), chess, x, y, r_ofs - 1, l_ofs + 1)
+        number += get_1d_matching(list(reversed(pattern)), x, y, r_ofs - 1, l_ofs + 1)
     return number
 
 
-def get_2d_matching(pattern: [[]], chess: [[]], x: int, y: int, anchor_x: int, anchor_y: int) -> int:
+def get_2d_matching(pattern: [[]], x: int, y: int, anchor_x: int, anchor_y: int) -> int:
     diff = y - x
     u_ofs = anchor_y
     d_ofs = len(pattern) - anchor_y
@@ -342,13 +349,19 @@ def get_2d_matching(pattern: [[]], chess: [[]], x: int, y: int, anchor_x: int, a
             int(is_pattern_match(pattern, diagonal)) + int(is_pattern_match(pattern, anti_diagonal)))
 
 
-def two_dimensional_pattern_match(pattern: [[]], chess: [[]], need_rotate: bool, x: int, y: int,
-                                  anchor_x: int, anchor_y: int) -> int:
-    number = get_2d_matching(pattern, chess, x, y, anchor_x, anchor_y)
+def two_dimensional_pattern_match(pattern: [[]], need_rotate: bool, x: int, y: int, anchor_x: int,
+                                  anchor_y: int) -> int:
+    number = get_2d_matching(pattern, x, y, anchor_x, anchor_y)
     if need_rotate:
-        number += get_2d_matching(numpy.rot90(numpy.rot90(pattern)), chess, x, y,
-                                  len(pattern) - anchor_x - 1, len(pattern[0]) - anchor_y - 1)
+        number += get_2d_matching(numpy.rot90(numpy.rot90(pattern)), x, y, len(pattern) - anchor_x - 1,
+                                  len(pattern[0]) - anchor_y - 1)
     return number
+
+
+def has_winner(x: int, y: int, player: int) -> bool:
+    global chess
+    chess = ai.chess
+    return one_dimensional_pattern_match([player, player, player, player, player], False, x, y, 4) > 0
 
 
 def is_pattern_match(pattern: [[]], array: [[]]) -> bool:
