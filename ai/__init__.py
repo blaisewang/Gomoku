@@ -174,8 +174,9 @@ def self_play_training(times: int):
                     white += 1
                 break
         play.update_q(winner)
-        if game_number % 50 == 0:
+        if game_number % 10 == 0:
             save_training_data(TRAINING_DATA_PATH + str(game_number) + DATA_NAME)
+        job_server.print_stats()
         print("No.", game_number, "Moves:", moves, "Cost", time.time() - last_time, "s")
         last_time = time.time()
 
@@ -183,6 +184,7 @@ def self_play_training(times: int):
     white_wins += white
     training_times += times
 
+    job_server.print_stats()
     save_training_data(TRAINING_DATA_PATH + DATA_NAME)
 
     print("Cost", time.time() - start_time, "s")
