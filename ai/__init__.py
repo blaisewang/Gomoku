@@ -15,6 +15,7 @@ max_q: int
 winner: int
 black_wins: int
 white_wins: int
+has_random: bool
 training_times: int
 chess: [[]]
 
@@ -33,10 +34,12 @@ MAX_BYTES = 2 ** 31 - 1
 
 
 def initialize():
-    global moves, max_q, chess, winner, last_state, q_matrix, next_result_list, state_record
+    global moves, max_q, chess, winner, has_random, last_state, q_matrix, next_result_list, state_record
     moves = 0
-    max_q = -sys.maxsize - 1
     winner = 0
+    has_random = False
+    max_q = -sys.maxsize - 1
+
     state_record = []
     next_result_list = []
     chess = [[-2 for _ in range(23)] for _ in range(23)]

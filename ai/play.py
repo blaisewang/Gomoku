@@ -31,8 +31,9 @@ def next_move(is_training: bool) -> (int, int):
         next_move_result = []
         next_move_list = ai.get_boundary()
 
-        if is_training and moves > 2:
+        if is_training and moves > 2 and not ai.has_random:
             if np.random.randint(1, MAGNIFICATION_FACTOR) <= greedy_threshold:
+                ai.has_random = True
                 greedy = False
 
         if greedy:
