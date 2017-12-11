@@ -46,6 +46,7 @@ def initialize():
 
     _, (state, _) = evaluate.get_state_and_reward(((11, 11), chess, moves, False))
     last_state = state
+    state_record.append(state)
     if not state_list:
         state_list.append(state)
         q_matrix = np.matrix(np.array([[0]]))

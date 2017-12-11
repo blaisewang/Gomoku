@@ -117,9 +117,9 @@ def update_q(winner: int):
                 ai.state_record[length - i])] -= bias_function(int((i - 1) / 2))
     else:
         length = len(ai.state_record) - 1
-        for i in range(0, length - 1):
+        for i in range(length - 2):
             ai.q_matrix[ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
-                ai.state_record[length - i])] -= draw_penalty * bias_function(int((i - 1) / 2))
+                ai.state_record[length - i])] -= draw_penalty * bias_function(i)
 
 
 def bias_function(step: int) -> float:
