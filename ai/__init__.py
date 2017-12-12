@@ -69,8 +69,7 @@ def q_matrix_processing(args):
 def add_move(x: int, y: int):
     global moves
     moves += 1
-    player = 2 if moves % 2 == 0 else 1
-    chess[x][y] = player
+    chess[x][y] = 2 if moves % 2 == 0 else 1
 
 
 def remove_move(x: int, y: int):
@@ -86,19 +85,19 @@ def has_winner(x: int, y: int):
         winner = player
 
 
-def get_boundary() -> []:
+def get_boundary(chess_copy: [[]]) -> []:
     boundary_list = []
     for i in range(4, 19):
         for j in range(4, 19):
-            if chess[i][j] == 0:
-                if (chess[i - 1][j - 1] == 1 or chess[i - 1][j - 1] == 2) or (
-                        chess[i - 1][j] == 1 or chess[i - 1][j] == 2) or (
-                        chess[i - 1][j + 1] == 1 or chess[i - 1][j + 1] == 2) or (
-                        chess[i][j - 1] == 1 or chess[i][j - 1] == 2) or (
-                        chess[i][j + 1] == 1 or chess[i][j + 1] == 2) or (
-                        chess[i + 1][j - 1] == 1 or chess[i + 1][j - 1] == 2) or (
-                        chess[i + 1][j] == 1 or chess[i + 1][j] == 2) or (
-                        chess[i + 1][j + 1] == 1 or chess[i + 1][j + 1] == 2):
+            if chess_copy[i][j] == 0:
+                if (chess_copy[i - 1][j - 1] == 1 or chess_copy[i - 1][j - 1] == 2) or (
+                        chess_copy[i - 1][j] == 1 or chess_copy[i - 1][j] == 2) or (
+                        chess_copy[i - 1][j + 1] == 1 or chess_copy[i - 1][j + 1] == 2) or (
+                        chess_copy[i][j - 1] == 1 or chess_copy[i][j - 1] == 2) or (
+                        chess_copy[i][j + 1] == 1 or chess_copy[i][j + 1] == 2) or (
+                        chess_copy[i + 1][j - 1] == 1 or chess_copy[i + 1][j - 1] == 2) or (
+                        chess_copy[i + 1][j] == 1 or chess_copy[i + 1][j] == 2) or (
+                        chess_copy[i + 1][j + 1] == 1 or chess_copy[i + 1][j + 1] == 2):
                     boundary_list.append((i, j))
     return boundary_list
 

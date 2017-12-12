@@ -15,10 +15,11 @@ GAMMA = 0.8
 
 def next_move(is_training: bool) -> (int, int):
     moves = ai.moves
+    chess = copy.deepcopy(ai.chess)
     greedy_threshold = int(EPSILON * MAGNIFICATION_FACTOR)
 
     if moves == 0:
-        _, (state, reward) = ai.evaluate.get_state_and_reward(((11, 11), copy.deepcopy(ai.chess), 0, True))
+        _, (state, reward) = ai.evaluate.get_state_and_reward(((11, 11), copy.deepcopy(chess), 0, True))
         if state not in ai.state_list:
             ai.q_matrix = np.row_stack((ai.q_matrix, np.zeros(len(ai.state_list))))
             ai.state_list.append(state)
@@ -29,7 +30,7 @@ def next_move(is_training: bool) -> (int, int):
     else:
         greedy = True
         next_move_result = []
-        next_move_list = ai.get_boundary()
+        next_move_list = ai.get_boundary(chess)
 
         if is_training and moves > 2 and not ai.has_random:
             if np.random.randint(1, MAGNIFICATION_FACTOR) <= greedy_threshold:
@@ -38,12 +39,11 @@ def next_move(is_training: bool) -> (int, int):
 
         if greedy:
             if not ai.next_result_list:
-
                 # results = ai.pool.map(ai.evaluate.get_state_and_reward,
-                #                       [(position, copy.deepcopy(ai.chess), moves, True) for position in
+                #                       [(position, copy.deepcopy(chess), moves, True) for position in
                 #                        next_move_list])
                 results = list(scoop.futures.map(ai.evaluate.get_state_and_reward,
-                                                 [(position, copy.deepcopy(ai.chess), ai.moves, True) for position in
+                                                 [(position, copy.deepcopy(chess), ai.moves, True) for position in
                                                   next_move_list]))
                 for result in results:
                     position, (state, reward) = result
@@ -71,9 +71,10 @@ def next_move(is_training: bool) -> (int, int):
                 available_move = ai.get_available_move()
                 next_x, next_y = available_move[np.random.randint(0, len(available_move))]
             _, (next_state, next_r) = ai.evaluate.get_state_and_reward(
-                ((next_x, next_y), copy.deepcopy(ai.chess), moves, True))
+                ((next_x, next_y), copy.deepcopy(chess), moves, True))
 
-        ai.add_move(next_x, next_y)
+        moves += 1
+        chess[next_x][next_y] = 2 if moves % 2 == 0 else 1
 
         if is_training:
             if next_state not in ai.state_list:
@@ -81,12 +82,12 @@ def next_move(is_training: bool) -> (int, int):
                 ai.state_list.append(next_state)
                 ai.q_matrix = np.column_stack((ai.q_matrix, np.zeros((len(ai.state_list), 1))))
 
+            potential_move_list = ai.get_boundary(chess)
             # results = ai.pool.map(ai.evaluate.get_state_and_reward,
-            #                       [(position, copy.deepcopy(ai.chess), moves, True) for position in
+            #                       [(position, copy.deepcopy(chess), moves, True) for position in
             #                        potential_move_list])
-            potential_move_list = ai.get_boundary()
             results = list(scoop.futures.map(ai.evaluate.get_state_and_reward,
-                                             [(position, copy.deepcopy(ai.chess), ai.moves, True) for position in
+                                             [(position, copy.deepcopy(chess), ai.moves, True) for position in
                                               potential_move_list]))
             for result in results:
                 position, (state, reward) = result
