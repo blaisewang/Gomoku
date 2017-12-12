@@ -21,10 +21,8 @@ def next_move(is_training: bool) -> (int, int):
     if moves == 0:
         _, (state, reward) = ai.evaluate.get_state_and_reward(((11, 11), copy.deepcopy(chess), 0, True))
         if state not in ai.state_list:
-            ai.q_matrix = np.row_stack((ai.q_matrix, np.zeros(len(ai.state_list))))
             ai.state_list.append(state)
-            ai.q_matrix = np.column_stack((ai.q_matrix, np.zeros((len(ai.state_list), 1))))
-            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)] = reward
+            ai.q_dictionary[str((ai.state_list.index(ai.last_state), ai.state_list.index(state)))] = reward
         ai.last_state = state
         return 11, 11
     else:
@@ -49,7 +47,9 @@ def next_move(is_training: bool) -> (int, int):
                     position, (state, reward) = result
                     q_value = 0.0
                     if state in ai.state_list:
-                        q_value = ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(state)]
+                        if str((ai.state_list.index(ai.last_state), ai.state_list.index(state))) in ai.q_dictionary:
+                            q_value = ai.q_dictionary[
+                                str((ai.state_list.index(ai.last_state), ai.state_list.index(state)))]
                     if q_value > ai.max_q:
                         ai.max_q = q_value
                     next_move_result.append((position, state, q_value, reward))
@@ -78,9 +78,7 @@ def next_move(is_training: bool) -> (int, int):
 
         if is_training:
             if next_state not in ai.state_list:
-                ai.q_matrix = np.row_stack((ai.q_matrix, np.zeros(len(ai.state_list))))
                 ai.state_list.append(next_state)
-                ai.q_matrix = np.column_stack((ai.q_matrix, np.zeros((len(ai.state_list), 1))))
 
             potential_move_list = ai.get_boundary(chess)
             # results = ai.pool.map(ai.evaluate.get_state_and_reward,
@@ -93,11 +91,13 @@ def next_move(is_training: bool) -> (int, int):
                 position, (state, reward) = result
                 q_value = 0.0
                 if state in ai.state_list:
-                    q_value = ai.q_matrix[ai.state_list.index(next_state), ai.state_list.index(state)]
+                    if str((ai.state_list.index(next_state), ai.state_list.index(state))) in ai.q_dictionary:
+                        q_value = ai.q_dictionary[str((ai.state_list.index(next_state), ai.state_list.index(state)))]
                 if q_value > ai.max_q:
                     ai.max_q = q_value
                 ai.next_result_list.append((position, state, q_value, reward))
-            ai.q_matrix[ai.state_list.index(ai.last_state), ai.state_list.index(next_state)] = next_r - GAMMA * ai.max_q
+            ai.q_dictionary[
+                str((ai.state_list.index(ai.last_state), ai.state_list.index(next_state)))] = next_r - GAMMA * ai.max_q
 
         ai.last_state = next_state
 
@@ -110,18 +110,18 @@ def update_q(winner: int):
     if winner == 1:
         length = len(ai.state_record) - 1
         for i in range(1, length - 2, 2):
-            ai.q_matrix[ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
-                ai.state_record[length - i])] -= bias_function(int((i - 1) / 2))
+            ai.q_dictionary[str(ai.state_list.index(ai.state_record[length - i - 1]),
+                                ai.state_list.index(ai.state_record[length - i]))] -= bias_function(int((i - 1) / 2))
     elif winner == 2:
         length = len(ai.state_record) - 1
         for i in range(1, length - 1, 2):
-            ai.q_matrix[ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
-                ai.state_record[length - i])] -= bias_function(int((i - 1) / 2))
+            ai.q_dictionary[str(ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
+                ai.state_record[length - i]))] -= bias_function(int((i - 1) / 2))
     else:
         length = len(ai.state_record) - 1
         for i in range(length - 2):
-            ai.q_matrix[ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
-                ai.state_record[length - i])] -= draw_penalty * bias_function(i)
+            ai.q_dictionary[str(ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
+                ai.state_record[length - i]))] -= draw_penalty * bias_function(i)
 
 
 def bias_function(step: int) -> float:

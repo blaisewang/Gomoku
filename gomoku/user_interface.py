@@ -227,7 +227,7 @@ class GomokuFrame(wx.Frame):
                     if ai.chess[y][x] == 0:
                         ai.add_move(y, x)
                         self.draw_move(x, y)
-                        process = multiprocessing.Process(target=ai.q_matrix_processing, args=((y, x),))
+                        process = multiprocessing.Process(target=ai.q_dictionary_processing, args=((y, x),))
                         process.daemon = True
                         process.start()
                         process.join()
