@@ -110,18 +110,18 @@ def update_q(winner: int):
     if winner == 1:
         length = len(ai.state_record) - 1
         for i in range(1, length - 2, 2):
-            ai.q_dictionary[str(ai.state_list.index(ai.state_record[length - i - 1]),
-                                ai.state_list.index(ai.state_record[length - i]))] -= bias_function(int((i - 1) / 2))
+            ai.q_dictionary[str((ai.state_list.index(ai.state_record[length - i - 1]),
+                                 ai.state_list.index(ai.state_record[length - i])))] -= bias_function(int((i - 1) / 2))
     elif winner == 2:
         length = len(ai.state_record) - 1
         for i in range(1, length - 1, 2):
-            ai.q_dictionary[str(ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
-                ai.state_record[length - i]))] -= bias_function(int((i - 1) / 2))
+            ai.q_dictionary[str((ai.state_list.index(ai.state_record[length - i - 1]),
+                                 ai.state_list.index(ai.state_record[length - i])))] -= bias_function(int((i - 1) / 2))
     else:
         length = len(ai.state_record) - 1
         for i in range(length - 2):
-            ai.q_dictionary[str(ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
-                ai.state_record[length - i]))] -= draw_penalty * bias_function(i)
+            ai.q_dictionary[str((ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
+                ai.state_record[length - i])))] -= draw_penalty * bias_function(i)
 
 
 def bias_function(step: int) -> float:

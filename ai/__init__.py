@@ -159,7 +159,6 @@ def self_play_training(times: int):
         while moves <= 225:
             x, y = play.next_move(True)
             add_move(x, y)
-            print(x, y)
             state_record.append(last_state)
             has_winner(x, y)
             if winner != 0:
@@ -168,9 +167,7 @@ def self_play_training(times: int):
                 elif winner == 2:
                     white += 1
                 break
-        print(q_dictionary)
         play.update_q(winner)
-        print(q_dictionary)
         if game_number % 100 == 0:
             save_training_data(TRAINING_DATA_PATH + DATA_NAME + "." + str(game_number))
         print("No.", game_number, "Moves:", moves, "Cost", time.time() - last_time, "s")
