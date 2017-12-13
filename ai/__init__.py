@@ -28,7 +28,7 @@ state_record = []
 
 DATA_NAME = "training.data"
 LOAD_TRAINING_FILE_PATH = "./data/"
-TRAINING_DATA_PATH = "/users/kaitok/gomoku/data/"
+TRAINING_DATA_PATH = "/mnt/lustre/kaitok/training/"
 MAX_BYTES = 2 ** 31 - 1
 
 
@@ -152,14 +152,12 @@ def save_training_data(file_path: str):
 
 def save_log(string: str):
     with open("/users/kaitok/gomoku/log", 'a') as file:
-        file.write(string)
+        file.write(string + "\n")
     file.close()
 
 
 def self_play_training(times: int):
     global black_wins, white_wins, training_times
-    black = 0
-    white = 0
     start_time = time.time()
     last_time = time.time()
 
@@ -175,22 +173,19 @@ def self_play_training(times: int):
             has_winner(x, y)
             if winner != 0:
                 if winner == 1:
-                    black += 1
+                    black_wins += 1
                 elif winner == 2:
-                    white += 1
+                    white_wins += 1
                 break
         play.update_q(winner)
-        if game_number % 2 == 0:
+        training_times += 1
+        if game_number % 100 == 0:
             process = multiprocessing.Process(target=save_training_data,
                                               args=(TRAINING_DATA_PATH + DATA_NAME + "." + str(game_number),))
             process.daemon = True
             process.start()
-        save_log("No." + str(game_number) + "Moves:" + str(moves) + "Cost" + str(time.time() - last_time) + "s\n")
+        save_log("No. " + str(game_number) + " Moves: " + str(moves) + " Costs " + str(time.time() - last_time) + " s")
         last_time = time.time()
-
-    black_wins += black
-    white_wins += white
-    training_times += times
 
     save_training_data(TRAINING_DATA_PATH + DATA_NAME)
 
