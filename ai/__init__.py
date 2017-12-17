@@ -4,8 +4,6 @@ import pickle
 import sys
 import time
 
-import numpy as np
-
 import ai.play
 import ai.evaluate
 
@@ -21,9 +19,9 @@ chess: [[]]
 # pool = multiprocessing.Pool(processes=4)
 
 last_state: []
-state_list: []
+state_list = []
 next_result_list = []
-q_matrix: np.matrix
+q_dictionary = {}
 state_record = []
 
 DATA_NAME = "training.data"
@@ -33,7 +31,7 @@ MAX_BYTES = 2 ** 31 - 1
 
 
 def initialize():
-    global moves, max_q, chess, winner, has_random, last_state, q_matrix, next_result_list, state_record
+    global moves, max_q, chess, winner, has_random, last_state, q_dictionary, next_result_list, state_record
     moves = 0
     winner = 0
     has_random = False
@@ -51,17 +49,14 @@ def initialize():
     state_record.append(state)
     if not state_list:
         state_list.append(state)
-        q_matrix = np.matrix(np.array([[0]]))
 
 
-def q_matrix_processing(args):
-    global last_state, q_matrix
+def q_dictionary_processing(args):
+    global last_state
     _, (state, _) = evaluate.get_state_and_reward((args, chess, moves, False))
     if state not in state_list:
-        q_matrix = np.row_stack((q_matrix, np.zeros(len(state_list))))
         state_list.append(state)
-        q_matrix = np.column_stack((q_matrix, np.zeros((len(state_list), 1))))
-        q_matrix[state_list.index(last_state), state_list.index(state)] = 0
+        q_dictionary[str((state_list.index(last_state), state_list.index(state)))] = 0
     last_state = state
 
 
@@ -111,7 +106,7 @@ def get_available_move() -> []:
 
 
 def load_training_data(is_training: bool) -> bool:
-    global state_list, q_matrix, black_wins, white_wins, training_times
+    global state_list, q_dictionary, black_wins, white_wins, training_times
 
     if is_training:
         file_path = TRAINING_DATA_PATH
@@ -125,14 +120,13 @@ def load_training_data(is_training: bool) -> bool:
         with open(file_path, 'rb') as file_in:
             for _ in range(0, input_size, MAX_BYTES):
                 bytes_in += file_in.read(MAX_BYTES)
-        (training_times, black_wins, white_wins), state_list, q_list = pickle.loads(bytes_in)
+        (training_times, black_wins, white_wins), state_list, q_dictionary = pickle.loads(bytes_in)
         file_in.close()
-        q_matrix = np.matrix(q_list)
         return True
     except IOError as error:
         print(error)
         state_list = []
-        q_matrix = [[]]
+        q_dictionary = {}
         black_wins = 0
         white_wins = 0
         training_times = 0
@@ -140,7 +134,7 @@ def load_training_data(is_training: bool) -> bool:
 
 
 def save_training_data(file_path: str):
-    bytes_out = pickle.dumps(((training_times, black_wins, white_wins), state_list, q_matrix.tolist()))
+    bytes_out = pickle.dumps(((training_times, black_wins, white_wins), state_list, q_dictionary))
     try:
         with open(file_path, 'wb') as file_out:
             for i in range(0, len(bytes_out), MAX_BYTES):
@@ -164,7 +158,6 @@ def self_play_training(times: int):
     print("")
     load_training_data(True)
     for i in range(times):
-        game_number = training_times + i + 1
         initialize()
         while moves <= 225:
             x, y = play.next_move(True)
@@ -179,12 +172,15 @@ def self_play_training(times: int):
                 break
         play.update_q(winner)
         training_times += 1
-        if game_number % 100 == 0:
+        if training_times % 200 == 0:
+            save_log("\nBlack wins " + str(black_wins) + " times. White wins " + str(white_wins) + " times.\n")
             process = multiprocessing.Process(target=save_training_data,
-                                              args=(TRAINING_DATA_PATH + DATA_NAME + "." + str(game_number),))
+                                              args=(TRAINING_DATA_PATH + DATA_NAME + "." + str(training_times),))
             process.daemon = True
             process.start()
-        save_log("No. " + str(game_number) + " Moves: " + str(moves) + " Costs " + str(time.time() - last_time) + " s")
+
+        save_log(
+            "No. " + str(training_times) + " Moves: " + str(moves) + " Costs " + str(time.time() - last_time) + " s")
         last_time = time.time()
 
     save_training_data(TRAINING_DATA_PATH + DATA_NAME)

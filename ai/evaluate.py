@@ -29,16 +29,6 @@ def get_state_and_reward(args: ((int, int), [[]], int, bool)) -> ((int, int), []
         ("PLAYER_NEARLY_WIN", [0, player, player, player, player, 0], 4)
     ]
 
-    one_dimensional_player_pattern_list = one_dimensional_player_pattern_list = [
-        ("B_P_P_P_B", [0, player, player, player, 0], False, 3, 30),
-        ("B_P_P_B_B", [0, player, player, 0, 0], True, 3, 12),
-        ("B_P_B_P_B", [0, player, 0, player, 0], False, 3, 20),
-        ("O_P_P_P_P_B", [opponent, player, player, player, player, 0], True, 4, 15),
-        ("O_P_P_P_B_B", [opponent, player, player, player, 0, 0], True, 4, 10),
-        ("O_P_P_B_B_B", [opponent, player, player, 0, 0, 0], True, 4, 5),
-        ("O_P_B_B_B_B", [opponent, player, 0, 0, 0, 0], True, 4, 1)
-    ]
-
     two_dimensional_player_winning_pattern_list = [
         ("PLAYER_CROSS_NEARLY_WIN", [[-1, -1, 0, -1, -1],
                                      [-1, -1, player, -1, -1],
@@ -50,6 +40,16 @@ def get_state_and_reward(args: ((int, int), [[]], int, bool)) -> ((int, int), []
                                      [-1, player, - 1, -1, -1],
                                      [-1, player, - 1, -1, -1],
                                      [-1, 0, -1, -1, -1]], True, (1, 1))
+    ]
+
+    one_dimensional_player_pattern_list = one_dimensional_player_pattern_list = [
+        ("B_P_P_P_B", [0, player, player, player, 0], False, 3, 30),
+        ("B_P_P_B_B", [0, player, player, 0, 0], True, 3, 12),
+        ("B_P_B_P_B", [0, player, 0, player, 0], False, 3, 20),
+        ("O_P_P_P_P_B", [opponent, player, player, player, player, 0], True, 4, 15),
+        ("O_P_P_P_B_B", [opponent, player, player, player, 0, 0], True, 4, 10),
+        ("O_P_P_B_B_B", [opponent, player, player, 0, 0, 0], True, 4, 5),
+        ("O_P_B_B_B_B", [opponent, player, 0, 0, 0, 0], True, 4, 1)
     ]
 
     return (x, y), (get_state(), get_reward(x, y))
@@ -83,6 +83,10 @@ def get_state() -> []:
         "OPPONENT_CROSS": 0,
         "OPPONENT_VERTICAL_CROSS": 0,
 
+        "START": 0
+    }
+
+    winning_dictionary = {
         "PLAYER_NEARLY_WIN": 0,
         "PLAYER_CROSS_NEARLY_WIN": 0,
         "PLAYER_WIN": 0,
@@ -90,8 +94,6 @@ def get_state() -> []:
         "OPPONENT_NEARLY_WIN": 0,
         "OPPONENT_CROSS_NEARLY_WIN": 0,
         "OPPONENT_WIN": 0,
-
-        "START": 0
     }
 
     if moves == 0:
@@ -99,6 +101,23 @@ def get_state() -> []:
     if moves == 1:
         pattern_dictionary["START"] = 1
     else:
+        one_dimensional_opponent_winning_pattern_list = [
+            ("OPPONENT_WIN", [opponent, opponent, opponent, opponent, opponent], False, 4),
+            ("OPPONENT_NEARLY_WIN", [opponent, opponent, opponent, opponent, 0], True, 4),
+        ]
+
+        two_dimensional_opponent_winning_pattern_list = [
+            ("OPPONENT_CROSS_NEARLY_WIN", [[-1, -1, 0, -1, -1],
+                                           [-1, -1, opponent, -1, -1],
+                                           [0, opponent, opponent, opponent, 0],
+                                           [-1, -1, opponent, -1, -1],
+                                           [-1, -1, 0, -1, -1]], False, (2, 2)),
+            ("OPPONENT_CROSS_NEARLY_WIN", [[-1, 0, -1, -1, -1],
+                                           [0, opponent, opponent, opponent, 0],
+                                           [-1, opponent, - 1, -1, -1],
+                                           [-1, opponent, - 1, -1, -1],
+                                           [-1, 0, -1, -1, -1]], True, (1, 1))
+        ]
 
         one_dimensional_opponent_pattern_list = [
             ("B_O_O_B_O_B", [0, opponent, opponent, 0, opponent, 0], True, 4),
@@ -136,46 +155,43 @@ def get_state() -> []:
                                          [-1, 0, -1, -1, -1]], True, (1, 1)),
         ]
 
-        one_dimensional_opponent_winning_pattern_list = [
-            ("OPPONENT_WIN", [opponent, opponent, opponent, opponent, opponent], False, 4),
-            ("OPPONENT_NEARLY_WIN", [opponent, opponent, opponent, opponent, 0], True, 4),
-        ]
-
-        two_dimensional_opponent_winning_pattern_list = [
-            ("OPPONENT_CROSS_NEARLY_WIN", [[-1, -1, 0, -1, -1],
-                                           [-1, -1, opponent, -1, -1],
-                                           [0, opponent, opponent, opponent, 0],
-                                           [-1, -1, opponent, -1, -1],
-                                           [-1, -1, 0, -1, -1]], False, (2, 2)),
-            ("OPPONENT_CROSS_NEARLY_WIN", [[-1, 0, -1, -1, -1],
-                                           [0, opponent, opponent, opponent, 0],
-                                           [-1, opponent, - 1, -1, -1],
-                                           [-1, opponent, - 1, -1, -1],
-                                           [-1, 0, -1, -1, -1]], True, (1, 1))
-        ]
-
         for i in range(4, 19):
             for j in range(4, 19):
+                if chess[i][j] == player:
+                    for key, pattern, left_offset in one_dimensional_player_winning_pattern_list:
+                        number = one_dimensional_pattern_match(pattern, False, i, j, left_offset)
+                        if number > 0:
+                            winning_dictionary[key] = number
+                            return list(winning_dictionary.values())
+                elif chess[i][j] == opponent:
+                    for key, pattern, need_reverse, left_offset in one_dimensional_opponent_winning_pattern_list:
+                        number = one_dimensional_pattern_match(pattern, need_reverse, i, j, left_offset)
+                        if number > 0:
+                            winning_dictionary[key] = number
+                            return list(winning_dictionary.values())
+
+                if chess[i][j] == player:
+                    for key, pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_player_winning_pattern_list:
+                        number = two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x, anchor_y)
+                        if number > 0:
+                            winning_dictionary[key] = number
+                            return list(winning_dictionary.values())
+                elif chess[i][j] == opponent:
+                    for key, pattern, need_rotate, (
+                            anchor_x, anchor_y) in two_dimensional_opponent_winning_pattern_list:
+                        number = two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x, anchor_y)
+                        if number > 0:
+                            winning_dictionary[key] = number
+                            return list(winning_dictionary.values())
+
                 if chess[i][j] == player:
                     for key, pattern, need_reverse, left_offset, _ in one_dimensional_player_pattern_list:
                         pattern_dictionary[key] += one_dimensional_pattern_match(pattern, need_reverse, i, j,
                                                                                  left_offset)
-                    for key, pattern, left_offset in one_dimensional_player_winning_pattern_list:
-                        pattern_dictionary[key] += one_dimensional_pattern_match(pattern, False, i, j, left_offset)
-                    for key, pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_player_winning_pattern_list:
-                        pattern_dictionary[key] += two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x,
-                                                                                 anchor_y)
                 elif chess[i][j] == opponent:
                     for key, pattern, need_reverse, left_offset in one_dimensional_opponent_pattern_list:
                         pattern_dictionary[key] += one_dimensional_pattern_match(pattern, need_reverse, i, j,
                                                                                  left_offset)
-                    for key, pattern, need_reverse, left_offset in one_dimensional_opponent_winning_pattern_list:
-                        pattern_dictionary[key] += one_dimensional_pattern_match(pattern, need_reverse, i, j,
-                                                                                 left_offset)
-                    for key, pattern, need_rotate, (
-                            anchor_x, anchor_y) in two_dimensional_opponent_winning_pattern_list:
-                        pattern_dictionary[key] += two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x,
-                                                                                 anchor_y)
                 else:
                     for key, pattern, need_rotate, (anchor_x, anchor_y) in two_dimensional_pattern_list:
                         pattern_dictionary[key] += two_dimensional_pattern_match(pattern, need_rotate, i, j, anchor_x,
