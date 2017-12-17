@@ -18,7 +18,7 @@ chess: [[]]
 
 # pool = multiprocessing.Pool(processes=4)
 
-last_state: []
+last_state = []
 state_list = []
 next_result_list = []
 q_dictionary = {}
@@ -56,7 +56,7 @@ def q_dictionary_processing(args):
     _, (state, _) = evaluate.get_state_and_reward((args, chess, moves, False))
     if state not in state_list:
         state_list.append(state)
-        q_dictionary[str((state_list.index(last_state), state_list.index(state)))] = 0
+        q_dictionary[(state_list.index(last_state), state_list.index(state))] = 0
     last_state = state
 
 
@@ -81,6 +81,7 @@ def has_winner(x: int, y: int):
 
 def get_boundary(chess_copy: [[]]) -> []:
     boundary_list = []
+    append = boundary_list.append
     for i in range(4, 19):
         for j in range(4, 19):
             if chess_copy[i][j] == 0:
@@ -92,16 +93,17 @@ def get_boundary(chess_copy: [[]]) -> []:
                         chess_copy[i + 1][j - 1] == 1 or chess_copy[i + 1][j - 1] == 2) or (
                         chess_copy[i + 1][j] == 1 or chess_copy[i + 1][j] == 2) or (
                         chess_copy[i + 1][j + 1] == 1 or chess_copy[i + 1][j + 1] == 2):
-                    boundary_list.append((i, j))
+                    append((i, j))
     return boundary_list
 
 
 def get_available_move() -> []:
     move_list = []
+    append = move_list.append
     for i in range(4, 19):
         for j in range(4, 19):
             if chess[i][j] == 0:
-                move_list.append((i, j))
+                append((i, j))
     return move_list
 
 
@@ -157,12 +159,13 @@ def self_play_training(times: int):
 
     print("")
     load_training_data(True)
+    append = state_record.append
     for i in range(times):
         initialize()
         while moves <= 225:
             x, y = play.next_move(True)
             add_move(x, y)
-            state_record.append(last_state)
+            append(last_state)
             has_winner(x, y)
             if winner != 0:
                 if winner == 1:

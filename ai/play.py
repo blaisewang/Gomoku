@@ -8,9 +8,9 @@ import scoop.futures
 import ai
 import ai.evaluate
 
+GAMMA = 0.8
 EPSILON = 0.0015
 MAGNIFICATION_FACTOR = 10000
-GAMMA = 0.8
 
 
 def next_move(is_training: bool) -> (int, int):
@@ -22,7 +22,7 @@ def next_move(is_training: bool) -> (int, int):
         _, (state, reward) = ai.evaluate.get_state_and_reward(((11, 11), copy.deepcopy(chess), 0, True))
         if state not in ai.state_list:
             ai.state_list.append(state)
-            ai.q_dictionary[str((ai.state_list.index(ai.last_state), ai.state_list.index(state)))] = reward
+            ai.q_dictionary[(ai.state_list.index(ai.last_state), ai.state_list.index(state))] = reward
         ai.last_state = state
         return 11, 11
     else:
@@ -43,24 +43,26 @@ def next_move(is_training: bool) -> (int, int):
                 results = list(scoop.futures.map(ai.evaluate.get_state_and_reward,
                                                  [(position, copy.deepcopy(chess), ai.moves, True) for position in
                                                   next_move_list]))
+                append = next_move_result.append
                 for result in results:
                     position, (state, reward) = result
                     q_value = 0.0
                     if state in ai.state_list:
-                        key = str((ai.state_list.index(ai.last_state), ai.state_list.index(state)))
-                        if ai.q_dictionary.get(key) is not None:
+                        key = (ai.state_list.index(ai.last_state), ai.state_list.index(state))
+                        if key in ai.q_dictionary:
                             q_value = ai.q_dictionary[key]
                     if q_value > ai.max_q:
                         ai.max_q = q_value
-                    next_move_result.append((position, state, q_value, reward))
+                    append((position, state, q_value, reward))
             else:
                 next_move_result = copy.deepcopy(ai.next_result_list)
                 ai.next_result_list.clear()
 
             potential_next_move_greedy_result = []
+            append = potential_next_move_greedy_result.append
             for position, state, q_value, reward in next_move_result:
                 if q_value == ai.max_q:
-                    potential_next_move_greedy_result.append((position, state, q_value, reward))
+                    append((position, state, q_value, reward))
             (next_x, next_y), next_state, _, next_r = potential_next_move_greedy_result[
                 np.random.randint(0, len(potential_next_move_greedy_result))]
             ai.max_q = -sys.maxsize - 1
@@ -77,8 +79,9 @@ def next_move(is_training: bool) -> (int, int):
         chess[next_x][next_y] = 2 if moves % 2 == 0 else 1
 
         if is_training:
+            append = ai.state_list.append
             if next_state not in ai.state_list:
-                ai.state_list.append(next_state)
+                append(next_state)
 
             potential_move_list = ai.get_boundary(chess)
             # results = ai.pool.map(ai.evaluate.get_state_and_reward,
@@ -87,21 +90,21 @@ def next_move(is_training: bool) -> (int, int):
             results = list(scoop.futures.map(ai.evaluate.get_state_and_reward,
                                              [(position, copy.deepcopy(chess), ai.moves, True) for position in
                                               potential_move_list]))
+            append = ai.next_result_list.append
             for result in results:
                 position, (state, reward) = result
                 q_value = 0.0
                 if state in ai.state_list:
-                    key = str((ai.state_list.index(next_state), ai.state_list.index(state)))
-                    if ai.q_dictionary.get(key) is not None:
+                    key = (ai.state_list.index(next_state), ai.state_list.index(state))
+                    if key in ai.q_dictionary:
                         q_value = ai.q_dictionary[key]
                 if q_value > ai.max_q:
                     ai.max_q = q_value
-                ai.next_result_list.append((position, state, q_value, reward))
+                append((position, state, q_value, reward))
             ai.q_dictionary[
-                str((ai.state_list.index(ai.last_state), ai.state_list.index(next_state)))] = next_r - GAMMA * ai.max_q
+                (ai.state_list.index(ai.last_state), ai.state_list.index(next_state))] = next_r - GAMMA * ai.max_q
 
         ai.last_state = next_state
-
         return next_x, next_y
 
 
@@ -111,18 +114,18 @@ def update_q(winner: int):
     if winner == 1:
         length = len(ai.state_record) - 1
         for i in range(1, length - 2, 2):
-            ai.q_dictionary[str((ai.state_list.index(ai.state_record[length - i - 1]),
-                                 ai.state_list.index(ai.state_record[length - i])))] -= bias_function(int((i - 1) / 2))
+            ai.q_dictionary[(ai.state_list.index(ai.state_record[length - i - 1]),
+                             ai.state_list.index(ai.state_record[length - i]))] -= bias_function(int((i - 1) / 2))
     elif winner == 2:
         length = len(ai.state_record) - 1
         for i in range(1, length - 1, 2):
-            ai.q_dictionary[str((ai.state_list.index(ai.state_record[length - i - 1]),
-                                 ai.state_list.index(ai.state_record[length - i])))] -= bias_function(int((i - 1) / 2))
+            ai.q_dictionary[(ai.state_list.index(ai.state_record[length - i - 1]),
+                             ai.state_list.index(ai.state_record[length - i]))] -= bias_function(int((i - 1) / 2))
     else:
         length = len(ai.state_record) - 1
         for i in range(length - 2):
-            ai.q_dictionary[str((ai.state_list.index(ai.state_record[length - i - 1]), ai.state_list.index(
-                ai.state_record[length - i])))] -= draw_penalty * bias_function(i)
+            ai.q_dictionary[(ai.state_list.index(ai.state_record[length - i - 1]),
+                             ai.state_list.index(ai.state_record[length - i]))] -= draw_penalty * bias_function(i)
 
 
 def bias_function(step: int) -> int:
