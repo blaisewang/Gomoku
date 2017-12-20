@@ -16,7 +16,7 @@ has_random: bool
 training_times: int
 chess: [[]]
 
-# pool = multiprocessing.Pool(processes=4)
+pool = multiprocessing.Pool(processes=4)
 
 last_state = []
 state_list = []
@@ -44,16 +44,16 @@ def initialize():
         for j in range(4, 19):
             chess[i][j] = 0
 
-    _, (state, _) = evaluate.get_state_and_reward(((11, 11), chess, moves, False))
+    _, (state, _) = ai.evaluate.get_state_and_reward(((11, 11), chess, [], moves, False))
     last_state = state
     state_record.append(state)
     if not state_list:
         state_list.append(state)
 
 
-def q_dictionary_processing(args):
+def q_dictionary_processing(coordinate):
     global last_state
-    _, (state, _) = evaluate.get_state_and_reward((args, chess, moves, False))
+    _, (state, _) = ai.evaluate.get_state_and_reward((coordinate, chess, last_state, moves, False))
     if state not in state_list:
         state_list.append(state)
         q_dictionary[(state_list.index(last_state), state_list.index(state))] = 0
@@ -163,7 +163,7 @@ def self_play_training(times: int):
     for i in range(times):
         initialize()
         while moves <= 225:
-            x, y = play.next_move(True)
+            x, y = ai.play.next_move(True)
             add_move(x, y)
             append(last_state)
             has_winner(x, y)
@@ -173,14 +173,11 @@ def self_play_training(times: int):
                 elif winner == 2:
                     white_wins += 1
                 break
-        play.update_q(winner)
+        ai.play.update_q(winner)
         training_times += 1
         if training_times % 200 == 0:
             save_log("\nBlack wins " + str(black_wins) + " times. White wins " + str(white_wins) + " times.\n")
-            process = multiprocessing.Process(target=save_training_data,
-                                              args=(TRAINING_DATA_PATH + DATA_NAME + "." + str(training_times),))
-            process.daemon = True
-            process.start()
+            save_training_data(TRAINING_DATA_PATH + DATA_NAME + "." + str(training_times))
 
         save_log(
             "No. " + str(training_times) + " Moves: " + str(moves) + " Costs " + str(time.time() - last_time) + " s")

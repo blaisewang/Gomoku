@@ -1,11 +1,11 @@
 import wx
 
-import gomoku.user_interface
+import ai.user_interface
 
 
 def main():
     app = wx.App(False)
-    gomoku.user_interface.GomokuFrame()
+    ai.user_interface.GomokuFrame()
     app.MainLoop()
 
 

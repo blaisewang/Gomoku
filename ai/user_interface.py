@@ -1,5 +1,3 @@
-import multiprocessing
-
 import wx
 
 import ai
@@ -33,6 +31,7 @@ class GomokuFrame(wx.Frame):
     row_list = []
     column_list = []
     chess_record = []
+    state_record = []
     row_name_list = ['15', '14', '13', '12', '11', '10', ' 9', ' 8', ' 7', ' 6', ' 5', ' 4', ' 3', ' 2', ' 1']
     column_name_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P']
 
@@ -81,6 +80,7 @@ class GomokuFrame(wx.Frame):
         self.current_move -= 1
         ai.winner = 0
         x, y = self.chess_record[self.current_move]
+        ai.last_state = self.state_record[self.current_move]
         ai.remove_move(y, x)
         self.draw_board()
         self.draw_chess()
@@ -92,6 +92,7 @@ class GomokuFrame(wx.Frame):
 
     def on_forward_button_click(self, _):
         x, y = self.chess_record[self.current_move]
+        ai.last_state = self.state_record[self.current_move]
         self.current_move += 1
         ai.add_move(y, x)
         self.draw_board()
@@ -108,6 +109,7 @@ class GomokuFrame(wx.Frame):
         self.moves = 0
         self.current_move = 0
         self.chess_record.clear()
+        self.state_record.clear()
         self.draw_board()
         self.back_button.Disable()
         self.forward_button.Disable()
@@ -116,6 +118,7 @@ class GomokuFrame(wx.Frame):
 
     def on_ai_play_button_click(self, _):
         x, y = ai.play.next_move(False)
+        ai.add_move(x, y)
         self.draw_move(y, x)
         if ai.moves == 255 or ai.winner != 0:
             self.ai_play_button.Disable()
@@ -202,10 +205,12 @@ class GomokuFrame(wx.Frame):
         if self.current_move != self.moves:
             for i in range(self.current_move, self.moves):
                 self.chess_record.pop()
+                self.state_record.pop()
             self.forward_button.Disable()
         self.current_move += 1
         self.moves = self.current_move
         self.chess_record.append((x, y))
+        self.state_record.append(ai.q_dictionary_processing((y, x), ))
         self.draw_chess()
         if self.moves > 8:
             ai.has_winner(y, x)
@@ -227,9 +232,6 @@ class GomokuFrame(wx.Frame):
                     if ai.chess[y][x] == 0:
                         ai.add_move(y, x)
                         self.draw_move(x, y)
-                        process = multiprocessing.Process(target=ai.q_dictionary_processing, args=((y, x),))
-                        process.daemon = True
-                        process.start()
         elif self.is_banner_displayed:
             self.draw_board()
             self.draw_chess()
