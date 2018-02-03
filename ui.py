@@ -126,7 +126,7 @@ class GomokuFrame(wx.Frame):
             self.current_move -= 1
             self.board.winner = 0
             self.board.remove_move()
-            if self.has_set_ai_player:
+            if self.has_set_ai_player and (self.board.winner == 0 or len(self.board.move_list) < self.n * self.n):
                 self.current_move -= 1
                 self.board.remove_move()
             self.forward_button.Enable()
@@ -143,7 +143,7 @@ class GomokuFrame(wx.Frame):
             x, y = self.chess_record[self.current_move]
             self.current_move += 1
             self.board.add_move(y, x)
-            if self.has_set_ai_player:
+            if self.has_set_ai_player and (self.board.winner == 0 or len(self.board.move_list) < self.n * self.n):
                 x, y = self.chess_record[self.current_move]
                 self.current_move += 1
                 self.board.add_move(y, x)
@@ -160,8 +160,8 @@ class GomokuFrame(wx.Frame):
         if not self.thread.is_alive():
             self.board = game.Board(self.n)
             self.moves = 0
-            self.has_set_ai_player = 0
             self.current_move = 0
+            self.has_set_ai_player = False
             self.chess_record.clear()
             self.draw_board()
             self.back_button.Disable()
@@ -186,15 +186,17 @@ class GomokuFrame(wx.Frame):
         self.thread.start()
 
     def on_ai_move_button_click(self, _):
-        self.ai_next_move()
+        if not self.thread.is_alive():
+            self.ai_next_move()
 
     def on_analysis_button_click(self, _):
-        moves, probability = copy.deepcopy(self.mcts_player).get_action(self.board, return_probability=2)
-        move_list = [(moves[i], p) for i, p in enumerate(probability) if p > 0]
-        if len(move_list) > 0:
-            self.draw_possible_moves(move_list)
-            self.is_analysis_displayed = True
-            self.analysis_button.Disable()
+        if not self.thread.is_alive():
+            moves, probability = copy.deepcopy(self.mcts_player).get_action(self.board, return_probability=2)
+            move_list = [(moves[i], p) for i, p in enumerate(probability) if p > 0]
+            if len(move_list) > 0:
+                self.draw_possible_moves(move_list)
+                self.is_analysis_displayed = True
+                self.analysis_button.Disable()
 
     def on_paint(self, _):
         dc = wx.PaintDC(self)
