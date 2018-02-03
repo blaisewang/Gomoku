@@ -1,8 +1,9 @@
 <component name="ProjectDictionaryState">
   <dictionary name="blaisewang">
     <words>
-      <w>gomoku</w>
-      <w>kaitok</w>
+      <w>convolutional</w>
+      <w>mcts</w>
+      <w>puct</w>
     </words>
   </dictionary>
 </component>
