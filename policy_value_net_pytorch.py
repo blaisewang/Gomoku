@@ -93,7 +93,7 @@ class PolicyValueNet:
         output: a list of (action, probability) tuples for each available action and the score of the board state
         """
         legal_positions = board.get_available_moves()
-        current_state = np.ascontiguousarray(board.current_state().reshape(-1, 4, self.n, self.n))
+        current_state = np.ascontiguousarray(board.get_current_state().reshape(-1, 4, self.n, self.n))
         if self.use_gpu:
             log_act_probability, value = self.policy_value_net(Variable(torch.from_numpy(current_state)).cuda().float())
             act_probability = np.exp(log_act_probability.data.cpu().numpy().flatten())

@@ -89,7 +89,7 @@ class GomokuFrame(wx.Frame):
                                           self.second_button_position_x,
                                           self.grid_position_y + 2 * BUTTON_HEIGHT_MARGIN),
                                       size=(self.half_button_width, BUTTON_HEIGHT))
-        self.ai_move_button = wx.Button(self, label="AI Move",
+        self.ai_hint_button = wx.Button(self, label="AI Hint",
                                         pos=(self.button_position_x, self.grid_position_y + 3 * BUTTON_HEIGHT_MARGIN),
                                         size=(BUTTON_WIDTH, BUTTON_HEIGHT))
         self.analysis_button = wx.Button(self, label="Analysis",
@@ -98,7 +98,7 @@ class GomokuFrame(wx.Frame):
         self.back_button.SetFont(button_font)
         self.forward_button.SetFont(button_font)
         self.replay_button.SetFont(button_font)
-        self.ai_move_button.SetFont(button_font)
+        self.ai_hint_button.SetFont(button_font)
         self.analysis_button.SetFont(button_font)
         self.black_button.SetFont(image_font)
         self.white_button.SetFont(image_font)
@@ -112,12 +112,12 @@ class GomokuFrame(wx.Frame):
             self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()
-            self.ai_move_button.Enable()
+            self.ai_hint_button.Enable()
             self.analysis_button.Enable()
         except IOError as _:
             self.black_button.Disable()
             self.white_button.Disable()
-            self.ai_move_button.Disable()
+            self.ai_hint_button.Disable()
             self.analysis_button.Disable()
         self.initialize_user_interface()
 
@@ -136,7 +136,7 @@ class GomokuFrame(wx.Frame):
                 self.back_button.Disable()
                 self.replay_button.Disable()
             if self.mcts_player is not None:
-                self.ai_move_button.Enable()
+                self.ai_hint_button.Enable()
 
     def on_forward_button_click(self, _):
         if not self.thread.is_alive():
@@ -154,7 +154,7 @@ class GomokuFrame(wx.Frame):
             if self.current_move == self.moves:
                 self.forward_button.Disable()
             if self.current_move == self.n * self.n:
-                self.ai_move_button.Disable()
+                self.ai_hint_button.Disable()
 
     def on_replay_button_click(self, _):
         if not self.thread.is_alive():
@@ -170,7 +170,7 @@ class GomokuFrame(wx.Frame):
             if self.mcts_player is not None:
                 self.black_button.Enable()
                 self.white_button.Enable()
-                self.ai_move_button.Enable()
+                self.ai_hint_button.Enable()
                 self.analysis_button.Enable()
 
     def on_black_button_click(self, _):
@@ -185,7 +185,7 @@ class GomokuFrame(wx.Frame):
         self.thread = threading.Thread(target=self.ai_next_move, args=())
         self.thread.start()
 
-    def on_ai_move_button_click(self, _):
+    def on_ai_hint_button_click(self, _):
         if not self.thread.is_alive():
             self.ai_next_move()
 
@@ -216,7 +216,7 @@ class GomokuFrame(wx.Frame):
     def disable_buttons(self):
         end, _ = self.board.has_ended()
         if end:
-            self.ai_move_button.Disable()
+            self.ai_hint_button.Disable()
             self.analysis_button.Disable()
 
     def initialize_user_interface(self):
@@ -227,7 +227,7 @@ class GomokuFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_replay_button_click, self.replay_button)
         self.Bind(wx.EVT_BUTTON, self.on_black_button_click, self.black_button)
         self.Bind(wx.EVT_BUTTON, self.on_white_button_click, self.white_button)
-        self.Bind(wx.EVT_BUTTON, self.on_ai_move_button_click, self.ai_move_button)
+        self.Bind(wx.EVT_BUTTON, self.on_ai_hint_button_click, self.ai_hint_button)
         self.Bind(wx.EVT_BUTTON, self.on_analysis_button_click, self.analysis_button)
         self.Centre()
         self.Show(True)
@@ -270,12 +270,12 @@ class GomokuFrame(wx.Frame):
     def draw_chess(self):
         dc = wx.ClientDC(self)
         self.disable_buttons()
-        for i in range(self.n):
-            for j in range(self.n):
+        for i in range(4, self.n + 4):
+            for j in range(4, self.n + 4):
                 if self.board.chess[j][i] > 0:
                     dc.SetBrush(wx.Brush(wx.BLACK if self.board.chess[j][i] == 1 else wx.WHITE))
-                    dc.DrawCircle(self.grid_position_x + i * BLOCK_LENGTH, self.grid_position_y + j * BLOCK_LENGTH,
-                                  self.piece_radius)
+                    dc.DrawCircle(self.grid_position_x + (i - 4) * BLOCK_LENGTH,
+                                  self.grid_position_y + (j - 4) * BLOCK_LENGTH, self.piece_radius)
         if self.current_move > 0:
             x, y = self.chess_record[self.current_move - 1]
             x = self.grid_position_x + x * BLOCK_LENGTH
@@ -332,7 +332,7 @@ class GomokuFrame(wx.Frame):
                     x = int(x / BLOCK_LENGTH)
                     y = int(y / BLOCK_LENGTH)
                     if 0 <= x < self.n and 0 <= y < self.n:
-                        if self.board.chess[y][x] == 0:
+                        if self.board.chess[y + 4][x + 4] == 0:
                             self.analysis_button.Enable()
                             self.black_button.Disable()
                             self.white_button.Disable()

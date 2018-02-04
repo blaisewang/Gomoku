@@ -85,7 +85,7 @@ class PolicyValueNetNumpy:
         output: a list of (action, probability) tuples for each available action and the score of the board state
         """
         legal_positions = board.get_available_moves()
-        current_state = board.current_state()
+        current_state = board.get_current_state()
 
         # first 3 convolutional layers with ReLU nonlinear
         x = current_state.reshape(-1, 4, self.n, self.n)

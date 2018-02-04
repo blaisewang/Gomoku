@@ -12,20 +12,25 @@ class Board:
             raise Exception('Illegal Parameter N')
         self.winner = 0
         self.move_list = []
-        self.chess = [[0 for _ in range(self.n)] for _ in range(self.n)]
+        self.chess = [[-2 for _ in range(self.n + 8)] for _ in range(self.n + 8)]
+        for i in range(4, self.n + 4):
+            for j in range(4, self.n + 4):
+                self.chess[i][j] = 0
 
     def initialize(self):
         self.winner = 0
         self.move_list = []
-        self.chess = [[0 for _ in range(self.n)] for _ in range(self.n)]
+        for i in range(4, self.n + 4):
+            for j in range(4, self.n + 4):
+                self.chess[i][j] = 0
 
     def add_move(self, x: int, y: int):
         self.move_list.append((x, y))
-        self.chess[x][y] = 2 if len(self.move_list) % 2 == 0 else 1
+        self.chess[x + 4][y + 4] = 2 if len(self.move_list) % 2 == 0 else 1
 
     def remove_move(self):
         x, y = self.move_list.pop()
-        self.chess[x][y] = 0
+        self.chess[x + 4][y + 4] = 0
 
     def move_to_location(self, move: int) -> (int, int):
         x = self.n - move // self.n - 1
@@ -36,24 +41,27 @@ class Board:
         return (self.n - x - 1) * self.n + y
 
     def get_available_moves(self) -> []:
-        move_list = []
-        append = move_list.append
-        for i in range(self.n):
-            for j in range(self.n):
+        potential_move_list = []
+        for i in range(4, self.n + 4):
+            for j in range(4, self.n + 4):
                 if self.chess[i][j] == 0:
-                    append(self.location_to_move(i, j))
-        return sorted(move_list)
+                    if len(self.move_list) % 2 == 1:
+                        if self.has_neighbor(i, j):
+                            potential_move_list.append(self.location_to_move(i - 4, j - 4))
+                    else:
+                        potential_move_list.append(self.location_to_move(i - 4, j - 4))
+        return sorted(potential_move_list)
 
-    def current_state(self) -> []:
+    def get_current_state(self) -> []:
         player = 1 if len(self.move_list) % 2 == 0 else 2
         opponent = 2 if player == 1 else 1
         square_state = np.zeros((4, self.n, self.n))
-        for i in range(self.n):
-            for j in range(self.n):
-                if self.chess[i][j] == player:
-                    square_state[0][self.n - i - 1][j] = 1.0
-                elif self.chess[i][j] == opponent:
-                    square_state[1][self.n - i - 1][j] = 1.0
+        for i in range(4, self.n + 4):
+            for j in range(4, self.n + 4):
+                if self.chess[i][j] == player and self.is_boundary(i, j):
+                    square_state[0][self.n - i + 3][j - 4] = 1.0
+                elif self.chess[i][j] == opponent and self.is_boundary(i, j):
+                    square_state[1][self.n - i + 3][j - 4] = 1.0
         if len(self.move_list) > 0:
             x, y = self.move_list[len(self.move_list) - 1]
             square_state[2][self.n - x - 1][y] = 1.0
@@ -61,13 +69,23 @@ class Board:
             square_state[3][:, :] = 1.0
         return square_state[:, ::-1, :]
 
+    def has_neighbor(self, x, y) -> bool:
+        neighbor_list = [self.chess[x - 1][y - 1], self.chess[x - 1][y], self.chess[x - 1][y + 1],
+                         self.chess[x][y - 1], self.chess[x][y + 1], self.chess[x + 1][y - 1],
+                         self.chess[x + 1][y], self.chess[x + 1][y + 1]]
+        for neighbor in neighbor_list:
+            if neighbor == 1 or neighbor == 2:
+                return True
+        return False
+
+    def is_boundary(self, x: int, y: int) -> bool:
+        if len(self.move_list) < 4:
+            return True
+        return self.has_neighbor(x, y)
+
     def has_winner(self, x: int, y: int):
         player = 2 if len(self.move_list) % 2 == 0 else 1
-        chess = [[-2 for _ in range(self.n + 8)] for _ in range(self.n + 8)]
-        for i in range(self.n):
-            for j in range(self.n):
-                chess[i + 4][j + 4] = self.chess[i][j]
-        if evaluate.has_winner(x + 4, y + 4, player, chess):
+        if evaluate.has_winner(x + 4, y + 4, player, self.chess):
             self.winner = player
 
     def has_ended(self) -> (bool, int):
@@ -111,7 +129,7 @@ class Game:
         while len(self.board.move_list) < self.board.n * self.board.n:
             move, move_probability = player.get_action(self.board, temp=temp, return_probability=1)
             # store the data
-            states.append(self.board.current_state())
+            states.append(self.board.get_current_state())
             mcts_probability.append(move_probability)
             current_players.append(self.board.get_current_player())
             # perform a move
