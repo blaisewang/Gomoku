@@ -93,7 +93,7 @@ class Game:
 
     def start_play(self, player1, player2):
         self.board.initialize()
-        while 1:
+        while len(self.board.move_list) < self.board.n * self.board.n:
             player_in_turn = player1 if self.board.get_current_player() == 1 else player2
             move = player_in_turn.get_action(self.board)
             x, y = self.board.move_to_location(move)
@@ -108,7 +108,7 @@ class Game:
         """
         self.board.initialize()
         states, mcts_probability, current_players = [], [], []
-        while 1:
+        while len(self.board.move_list) < self.board.n * self.board.n:
             move, move_probability = player.get_action(self.board, temp=temp, return_probability=1)
             # store the data
             states.append(self.board.current_state())

@@ -5,8 +5,8 @@ import copy
 import wx
 
 import game
-from policy_value_net_numpy import PolicyValueNetNumpy
 from mcts_alphaZero import MCTSPlayer
+from policy_value_net_numpy import PolicyValueNetNumpy
 
 WIN_WIDTH = 1024
 WIN_HEIGHT = 720

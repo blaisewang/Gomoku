@@ -43,7 +43,7 @@ class TrainPipeline:
         self.epochs = 5  # num of train_steps for each update
         self.kl_target = 0.025
         self.check_freq = 50
-        self.game_batch_num = 1500
+        self.game_batch_num = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
         # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
@@ -127,10 +127,16 @@ class TrainPipeline:
                 winner = self.game.start_play(current_mcts_player, pure_mcts_player)
             else:
                 winner = self.game.start_play(pure_mcts_player, current_mcts_player)
+                if winner == 1:
+                    winner = 2
+                elif winner == 2:
+                    winner = 1
             win_cnt[winner] += 1
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / n_games
         print("number_play_outs:{}, win: {}, lose: {}, tie:{}".
               format(self.pure_mcts_play_out_number, win_cnt[1], win_cnt[2], win_cnt[-1]))
+        print_log("number_play_outs:{}, win: {}, lose: {}, tie:{}".
+                  format(self.pure_mcts_play_out_number, win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
 
     def run(self):
