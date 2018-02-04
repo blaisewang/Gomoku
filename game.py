@@ -109,7 +109,10 @@ class Game:
     def __init__(self, board: 'Board'):
         self.board = board
 
-    def start_play(self, player1, player2):
+    def start_play(self, args):
+        player1, player2, index = args
+        if index % 2:
+            player1, player2 = player2, player1
         self.board.initialize()
         while len(self.board.move_list) < self.board.n * self.board.n:
             player_in_turn = player1 if self.board.get_current_player() == 1 else player2
@@ -118,6 +121,8 @@ class Game:
             self.board.add_move(x, y)
             has_ended, winner = self.board.has_ended()
             if has_ended:
+                if index % 2:
+                    winner = 1 if winner == 2 else 2
                 return winner
 
     def start_self_play(self, player: 'MCTSPlayer', temp=1e-3):

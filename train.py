@@ -4,6 +4,9 @@ An implementation of the training pipeline of AlphaZero for Gomoku
 @author: Junxiao Song
 """
 
+import copy
+import multiprocessing
+import os
 import pickle
 import random
 import sys
@@ -19,9 +22,10 @@ from policy_value_net_pytorch import PolicyValueNet
 
 
 def print_log(string: str):
-    with open("log", 'a') as file:
-        file.write(string + "\n")
-    file.close()
+    if os.cpu_count() > 4:
+        with open("log", 'a') as file:
+            file.write(string + "\n")
+        file.close()
 
 
 class TrainPipeline:
@@ -43,9 +47,10 @@ class TrainPipeline:
         self.epochs = 5  # num of train_steps for each update
         self.kl_target = 0.025
         self.check_freq = 50
-        self.game_batch_num = 10000
+        self.game_batch_number = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
+        self.pool = multiprocessing.Pool(processes=os.cpu_count())
         # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_play_out_number = 1000
         if init_model:
@@ -79,7 +84,8 @@ class TrainPipeline:
         """collect self-play data for training"""
         for i in range(n_games):
             winner, play_data = self.game.start_self_play(self.mcts_player, temp=self.temp)
-            self.episode_length = len(list(play_data))
+            play_data = list(play_data)
+            self.episode_length = len(play_data)
             # augment the data
             play_data = self.get_equal_data(play_data)
             self.data_buffer.extend(play_data)
@@ -112,6 +118,8 @@ class TrainPipeline:
         explained_var_new = 1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch))
         print("kl:{:.5f},lr_multiplier:{:.3f},explained_var_old:{:.3f},explained_var_new:{:.3f}".
               format(kl, self.lr_multiplier, explained_var_old, explained_var_new))
+        print_log("kl:{:.5f},lr_multiplier:{:.3f},explained_var_old:{:.3f},explained_var_new:{:.3f}".
+                  format(kl, self.lr_multiplier, explained_var_old, explained_var_new))
 
     def policy_evaluate(self, n_games=10):
         """
@@ -122,15 +130,10 @@ class TrainPipeline:
                                          n_play_out=self.n_play_out)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_play_out=self.pure_mcts_play_out_number)
         win_cnt = defaultdict(int)
-        for i in range(n_games):
-            if i % 2:
-                winner = self.game.start_play(current_mcts_player, pure_mcts_player)
-            else:
-                winner = self.game.start_play(pure_mcts_player, current_mcts_player)
-                if winner == 1:
-                    winner = 2
-                elif winner == 2:
-                    winner = 1
+        results = self.pool.map(self.game.start_play,
+                                [(copy.deepcopy(current_mcts_player), copy.deepcopy(pure_mcts_player), i) for i in
+                                 range(n_games)])
+        for winner in results:
             win_cnt[winner] += 1
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / n_games
         print("number_play_outs:{}, win: {}, lose: {}, tie:{}".
@@ -142,7 +145,7 @@ class TrainPipeline:
     def run(self):
         """run the training pipeline"""
         try:
-            for i in range(self.game_batch_num):
+            for i in range(self.game_batch_number):
                 start_time = time.time()
                 self.collect_self_play_data(self.play_batch_size)
                 print("batch i:{}, episode_len:{}".format(i + 1, self.episode_length))
@@ -165,7 +168,7 @@ class TrainPipeline:
                             self.pure_mcts_play_out_number) + " play-out")
                         self.best_win_ratio = win_ratio
                         pickle.dump(net_params, open('best_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
-                        if self.best_win_ratio == 1.0 and self.pure_mcts_play_out_number < 10000:
+                        if self.best_win_ratio >= 0.8 and self.pure_mcts_play_out_number < 10000:
                             self.pure_mcts_play_out_number += 1000
                             self.best_win_ratio = 0.0
                 print_log(str(time.time() - start_time))
