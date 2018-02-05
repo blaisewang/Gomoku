@@ -45,11 +45,7 @@ class Board:
         for i in range(4, self.n + 4):
             for j in range(4, self.n + 4):
                 if self.chess[i][j] == 0:
-                    if len(self.move_list) % 2 == 1:
-                        if self.has_neighbor(i, j):
-                            potential_move_list.append(self.location_to_move(i - 4, j - 4))
-                    else:
-                        potential_move_list.append(self.location_to_move(i - 4, j - 4))
+                    potential_move_list.append(self.location_to_move(i - 4, j - 4))
         return sorted(potential_move_list)
 
     def get_current_state(self) -> []:
@@ -58,9 +54,9 @@ class Board:
         square_state = np.zeros((4, self.n, self.n))
         for i in range(4, self.n + 4):
             for j in range(4, self.n + 4):
-                if self.chess[i][j] == player and self.is_boundary(i, j):
+                if self.chess[i][j] == player:
                     square_state[0][self.n - i + 3][j - 4] = 1.0
-                elif self.chess[i][j] == opponent and self.is_boundary(i, j):
+                elif self.chess[i][j] == opponent:
                     square_state[1][self.n - i + 3][j - 4] = 1.0
         if len(self.move_list) > 0:
             x, y = self.move_list[len(self.move_list) - 1]
@@ -68,20 +64,6 @@ class Board:
         if player == 1:
             square_state[3][:, :] = 1.0
         return square_state[:, ::-1, :]
-
-    def has_neighbor(self, x, y) -> bool:
-        neighbor_list = [self.chess[x - 1][y - 1], self.chess[x - 1][y], self.chess[x - 1][y + 1],
-                         self.chess[x][y - 1], self.chess[x][y + 1], self.chess[x + 1][y - 1],
-                         self.chess[x + 1][y], self.chess[x + 1][y + 1]]
-        for neighbor in neighbor_list:
-            if neighbor == 1 or neighbor == 2:
-                return True
-        return False
-
-    def is_boundary(self, x: int, y: int) -> bool:
-        if len(self.move_list) < 4:
-            return True
-        return self.has_neighbor(x, y)
 
     def has_winner(self, x: int, y: int):
         player = 2 if len(self.move_list) % 2 == 0 else 1

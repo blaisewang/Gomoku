@@ -22,10 +22,9 @@ from policy_value_net_pytorch import PolicyValueNet
 
 
 def print_log(string: str):
-    if os.cpu_count() > 4:
-        with open("log", 'a') as file:
-            file.write(string + "\n")
-        file.close()
+    with open("log", 'a') as file:
+        file.write(string + "\n")
+    file.close()
 
 
 class TrainPipeline:
@@ -116,8 +115,6 @@ class TrainPipeline:
 
         explained_var_old = 1 - np.var(np.array(winner_batch) - old_v.flatten()) / np.var(np.array(winner_batch))
         explained_var_new = 1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch))
-        print("kl:{:.5f},lr_multiplier:{:.3f},explained_var_old:{:.3f},explained_var_new:{:.3f}".
-              format(kl, self.lr_multiplier, explained_var_old, explained_var_new))
         print_log("kl:{:.5f},lr_multiplier:{:.3f},explained_var_old:{:.3f},explained_var_new:{:.3f}".
                   format(kl, self.lr_multiplier, explained_var_old, explained_var_new))
 
@@ -136,8 +133,6 @@ class TrainPipeline:
         for winner in results:
             win_cnt[winner] += 1
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / n_games
-        print("number_play_outs:{}, win: {}, lose: {}, tie:{}".
-              format(self.pure_mcts_play_out_number, win_cnt[1], win_cnt[2], win_cnt[-1]))
         print_log("number_play_outs:{}, win: {}, lose: {}, tie:{}".
                   format(self.pure_mcts_play_out_number, win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
@@ -146,24 +141,25 @@ class TrainPipeline:
         """run the training pipeline"""
         try:
             for i in range(self.game_batch_number):
+                if os.path.exists("done"):
+                    print("Finish training")
+                    break
                 start_time = time.time()
                 self.collect_self_play_data(self.play_batch_size)
-                print("batch i:{}, episode_len:{}".format(i + 1, self.episode_length))
                 print_log(
                     "batch i:{}, episode_len:{}, in:{}".format(i + 1, self.episode_length, time.time() - start_time))
-                start_time = time.time()
                 if len(self.data_buffer) > self.batch_size:
+                    start_time = time.time()
                     self.policy_update()
+                    print_log(str(time.time() - start_time))
                     # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
-                    print("current self-play batch: {}".format(i + 1))
+                    start_time = time.time()
                     print_log("current self-play batch: {}".format(i + 1))
                     win_ratio = self.policy_evaluate()
                     net_params = self.policy_value_net.get_policy_param()  # get model params
                     pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
                     if win_ratio > self.best_win_ratio:
-                        print("\nNew best policy defeated MCTS player with " + str(
-                            self.pure_mcts_play_out_number) + " play-out")
                         print_log("\nNew best policy defeated MCTS player with " + str(
                             self.pure_mcts_play_out_number) + " play-out")
                         self.best_win_ratio = win_ratio
@@ -171,7 +167,7 @@ class TrainPipeline:
                         if self.best_win_ratio >= 0.8 and self.pure_mcts_play_out_number < 10000:
                             self.pure_mcts_play_out_number += 1000
                             self.best_win_ratio = 0.0
-                print_log(str(time.time() - start_time))
+                    print_log(str(time.time() - start_time))
         except KeyboardInterrupt:
             print("\n\rquit")
         except InterruptedError:
