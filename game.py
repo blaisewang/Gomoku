@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 import evaluate
@@ -42,14 +44,11 @@ class Board:
 
     def get_available_moves(self) -> []:
         potential_move_list = []
+        chess = self.get_generalized_chess(copy.deepcopy(self.chess))
         for i in range(4, self.n + 4):
             for j in range(4, self.n + 4):
-                if self.chess[i][j] == 0:
-                    if len(self.move_list) % 2 == 1:
-                        if self.has_neighbor(i, j, 2):
-                            potential_move_list.append(self.location_to_move(i - 4, j - 4))
-                    else:
-                        potential_move_list.append(self.location_to_move(i - 4, j - 4))
+                if chess[i][j] == 0:
+                    potential_move_list.append(self.location_to_move(i - 4, j - 4))
         return sorted(potential_move_list)
 
     def get_current_state(self) -> []:
@@ -69,19 +68,24 @@ class Board:
             square_state[3][:, :] = 1.0
         return square_state[:, ::-1, :]
 
-    def has_neighbor(self, x: int, y: int, depth: int) -> bool:
-        neighbor_list = [(x - 1, y - 1), (x - 1, y), (x - 1, y + 1), (x, y - 1), (x, y + 1), (x + 1, y - 1),
-                         (x + 1, y), (x + 1, y + 1)]
-        for px, py in neighbor_list:
-            if self.chess[px][py] == 1 or self.chess[px][py] == 2:
-                if depth == 0 or self.is_boundary(px, py, depth - 1):
-                    return True
-        return False
+    def get_generalized_chess(self, chess: [[]]) -> [[]]:
+        for i in range(4, self.n + 4):
+            for j in range(4, self.n + 4):
+                if chess[i][j] == 1 or chess[i][j] == 2:
+                    if not self.has_neighbor(i, j):
+                        chess[i][j] = 0
+        return chess
 
-    def is_boundary(self, x: int, y: int, depth: int) -> bool:
+    def has_neighbor(self, x, y) -> bool:
         if len(self.move_list) < 4:
             return True
-        return self.has_neighbor(x, y, depth)
+        neighbor_list = [self.chess[x - 1][y - 1], self.chess[x - 1][y], self.chess[x - 1][y + 1],
+                         self.chess[x][y - 1], self.chess[x][y + 1], self.chess[x + 1][y - 1],
+                         self.chess[x + 1][y], self.chess[x + 1][y + 1]]
+        for neighbor in neighbor_list:
+            if neighbor == 1 or neighbor == 2:
+                return True
+        return False
 
     def has_winner(self, x: int, y: int):
         player = 2 if len(self.move_list) % 2 == 0 else 1

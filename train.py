@@ -38,20 +38,20 @@ class TrainPipeline:
         self.learn_rate = 5e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        self.n_play_out = 400  # num of simulations for each move
+        self.n_play_out = 400  # number of simulations for each move
         self.c_puct = 5
         self.buffer_size = 10000
         self.batch_size = 512  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.play_batch_size = 1
-        self.epochs = 5  # num of train_steps for each update
+        self.epochs = 5  # number of train_steps for each update
         self.kl_target = 0.025
-        self.check_freq = 1
+        self.check_freq = 50
         self.game_batch_number = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
         self.pool = multiprocessing.Pool(processes=os.cpu_count())
-        # num of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
+        # number of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_play_out_number = 1000
         if init_model:
             # start training from an initial policy-value net
