@@ -109,7 +109,7 @@ class GomokuFrame(wx.Frame):
         try:
             model_file = 'best_policy.model'
             policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
-            best_policy = PolicyValueNet(self.n, policy_param) if 1 == 1 else PolicyValueNetNumpy(self.n, policy_param)
+            best_policy = PolicyValueNet(self.n, policy_param) if 2 == 1 else PolicyValueNetNumpy(self.n, policy_param)
             self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()

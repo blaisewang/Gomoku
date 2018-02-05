@@ -58,9 +58,9 @@ class Board:
         square_state = np.zeros((4, self.n, self.n))
         for i in range(4, self.n + 4):
             for j in range(4, self.n + 4):
-                if self.chess[i][j] == player and self.is_boundary(i, j, 2):
+                if self.chess[i][j] == player:
                     square_state[0][self.n - i + 3][j - 4] = 1.0
-                elif self.chess[i][j] == opponent and self.is_boundary(i, j, 2):
+                elif self.chess[i][j] == opponent:
                     square_state[1][self.n - i + 3][j - 4] = 1.0
         if len(self.move_list) > 0:
             x, y = self.move_list[len(self.move_list) - 1]

@@ -10,6 +10,7 @@ import os
 import pickle
 import random
 import sys
+import threading
 from collections import defaultdict, deque
 
 import numpy as np
@@ -45,7 +46,7 @@ class TrainPipeline:
         self.play_batch_size = 1
         self.epochs = 5  # num of train_steps for each update
         self.kl_target = 0.025
-        self.check_freq = 50
+        self.check_freq = 1
         self.game_batch_number = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
@@ -118,12 +119,12 @@ class TrainPipeline:
         print_log("kl:{:.5f},lr_multiplier:{:.3f},explained_var_old:{:.3f},explained_var_new:{:.3f}".
                   format(kl, self.lr_multiplier, explained_var_old, explained_var_new))
 
-    def policy_evaluate(self, n_games=10):
+    def policy_evaluate(self, policy_value_net: 'PolicyValueNet', n_games=10):
         """
         Evaluate the trained policy by playing games against the pure MCTS player
         Note: this is only for monitoring the progress of training
         """
-        current_mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=self.c_puct,
+        current_mcts_player = MCTSPlayer(policy_value_net.policy_value_func, c_puct=self.c_puct,
                                          n_play_out=self.n_play_out)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_play_out=self.pure_mcts_play_out_number)
         win_cnt = defaultdict(int)
@@ -136,6 +137,20 @@ class TrainPipeline:
         print_log("number_play_outs:{}, win: {}, lose: {}, tie:{}".
                   format(self.pure_mcts_play_out_number, win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
+
+    def evaluate_thread(self, policy_value_net):
+        start_time = time.time()
+        win_ratio = self.policy_evaluate(policy_value_net)
+        net_params = policy_value_net.get_policy_param()  # get model params
+        pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
+        if win_ratio > self.best_win_ratio:
+            print_log("\nNew best policy defeated " + str(self.pure_mcts_play_out_number) + " play out MCTS player ")
+            self.best_win_ratio = win_ratio
+            pickle.dump(net_params, open('best_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
+            if self.best_win_ratio >= 0.8 and self.pure_mcts_play_out_number < 10000:
+                self.pure_mcts_play_out_number += 1000
+                self.best_win_ratio = 0.0
+        print_log(str(time.time() - start_time))
 
     def run(self):
         """run the training pipeline"""
@@ -154,20 +169,8 @@ class TrainPipeline:
                     print_log(str(time.time() - start_time))
                     # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
-                    start_time = time.time()
                     print_log("current self-play batch: {}".format(i + 1))
-                    win_ratio = self.policy_evaluate()
-                    net_params = self.policy_value_net.get_policy_param()  # get model params
-                    pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
-                    if win_ratio > self.best_win_ratio:
-                        print_log("\nNew best policy defeated MCTS player with " + str(
-                            self.pure_mcts_play_out_number) + " play-out")
-                        self.best_win_ratio = win_ratio
-                        pickle.dump(net_params, open('best_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
-                        if self.best_win_ratio >= 0.8 and self.pure_mcts_play_out_number < 10000:
-                            self.pure_mcts_play_out_number += 1000
-                            self.best_win_ratio = 0.0
-                    print_log(str(time.time() - start_time))
+                    threading.Thread(target=self.evaluate_thread, args=(copy.deepcopy(self.policy_value_net),)).start()
         except KeyboardInterrupt:
             print("\n\rquit")
         except InterruptedError:

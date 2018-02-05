@@ -5,7 +5,7 @@ import ui
 
 def run():
     app = wx.App(False)
-    ui.GomokuFrame(9)
+    ui.GomokuFrame(8)
     app.MainLoop()
 
 
