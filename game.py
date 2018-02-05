@@ -121,7 +121,7 @@ class Game:
             self.board.add_move(x, y)
             has_ended, winner = self.board.has_ended()
             if has_ended:
-                if not index % 2:
+                if index % 2:
                     winner = 1 if winner == 2 else 2
                 return winner
 

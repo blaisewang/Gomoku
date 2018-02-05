@@ -303,7 +303,7 @@ class GomokuFrame(wx.Frame):
         dc.DrawText(string, x, (WIN_HEIGHT - 26) / 2 - HEIGHT_OFFSET)
         self.is_banner_displayed = True
 
-    def draw_move(self, x: int, y: int):
+    def draw_move(self, x: int, y: int) -> bool:
         if self.current_move == 0:
             self.back_button.Enable()
             self.replay_button.Enable()
@@ -320,6 +320,8 @@ class GomokuFrame(wx.Frame):
             if end:
                 self.disable_buttons()
                 self.draw_banner(winner)
+            return end
+        return False
 
     def on_click(self, e):
         if not self.thread.is_alive():
@@ -338,10 +340,8 @@ class GomokuFrame(wx.Frame):
                             self.black_button.Disable()
                             self.white_button.Disable()
                             self.board.add_move(y, x)
-                            self.draw_move(x, y)
-                            print(self.board.get_current_state())
-                            print(self.board.get_available_moves())
-                            if self.has_set_ai_player:
+                            has_end = self.draw_move(x, y)
+                            if self.has_set_ai_player and not has_end:
                                 self.thread = threading.Thread(target=self.ai_next_move, args=())
                                 self.thread.start()
             elif self.is_banner_displayed:
