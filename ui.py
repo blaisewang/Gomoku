@@ -6,6 +6,7 @@ import wx
 
 import game
 from mcts_alphaZero import MCTSPlayer
+from policy_value_net_pytorch import PolicyValueNet
 from policy_value_net_numpy import PolicyValueNetNumpy
 
 WIN_WIDTH = 1024
@@ -108,7 +109,7 @@ class GomokuFrame(wx.Frame):
         try:
             model_file = 'best_policy.model'
             policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
-            best_policy = PolicyValueNetNumpy(self.n, policy_param)
+            best_policy = PolicyValueNet(self.n, policy_param) if 1 == 1 else PolicyValueNetNumpy(self.n, policy_param)
             self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()
@@ -338,6 +339,8 @@ class GomokuFrame(wx.Frame):
                             self.white_button.Disable()
                             self.board.add_move(y, x)
                             self.draw_move(x, y)
+                            print(self.board.get_current_state())
+                            print(self.board.get_available_moves())
                             if self.has_set_ai_player:
                                 self.thread = threading.Thread(target=self.ai_next_move, args=())
                                 self.thread.start()

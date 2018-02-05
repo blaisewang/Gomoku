@@ -87,7 +87,7 @@ class PolicyValueNet:
             act_probability = np.exp(log_act_probability.data.numpy())
             return act_probability, value.data.numpy()
 
-    def policy_value_fn(self, board: 'Board'):
+    def policy_value_func(self, board: 'Board'):
         """
         input: board
         output: a list of (action, probability) tuples for each available action and the score of the board state

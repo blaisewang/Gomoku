@@ -59,7 +59,7 @@ class TrainPipeline:
         else:
             # start training from a new policy-value net
             self.policy_value_net = PolicyValueNet(self.n)
-        self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
+        self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=self.c_puct,
                                       n_play_out=self.n_play_out, is_self_play=1)
 
     def get_equal_data(self, play_data):
@@ -123,7 +123,7 @@ class TrainPipeline:
         Evaluate the trained policy by playing games against the pure MCTS player
         Note: this is only for monitoring the progress of training
         """
-        current_mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn, c_puct=self.c_puct,
+        current_mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=self.c_puct,
                                          n_play_out=self.n_play_out)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_play_out=self.pure_mcts_play_out_number)
         win_cnt = defaultdict(int)
