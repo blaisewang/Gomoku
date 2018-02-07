@@ -117,8 +117,6 @@ class Game:
         self.board.initialize()
         while len(self.board.move_list) < self.board.n * self.board.n:
             player_in_turn = player1 if self.board.get_current_player() == 1 else player2
-            print(index)
-            print(player_in_turn)
             move = player_in_turn.get_action(self.board)
             x, y = self.board.move_to_location(move)
             self.board.add_move(x, y)
