@@ -80,7 +80,7 @@ class TreeNode:
         return self._parent is None
 
 
-class MCTS(object):
+class MCTS:
     """A simple implementation of Monte Carlo Tree Search.
     """
 
@@ -138,10 +138,7 @@ class MCTS(object):
         Returns:
         the available actions and the corresponding probabilities 
         """
-        for n in range(self._n_play_out):
-            state_copy = copy.deepcopy(state)
-            self._play_out(state_copy)
-
+        [self._play_out(copy.deepcopy(state)) for _ in range(self._n_play_out)]
         # calc the move probabilities based on the visit counts at the root node
         act_visits = [(act, node.n_visits) for act, node in self._root.children.items()]
         acts, visits = zip(*act_visits)
@@ -149,7 +146,7 @@ class MCTS(object):
 
         return acts, act_probability
 
-    def update_with_move(self, last_move):
+    def update_with_move(self, last_move: int):
         """Step forward in the tree, keeping everything we already know about the subtree.
         """
         if last_move in self._root.children:
@@ -159,7 +156,7 @@ class MCTS(object):
             self._root = TreeNode(None, 1.0)
 
 
-class MCTSPlayer(object):
+class MCTSPlayer:
     """AI player based on MCTS"""
 
     def __init__(self, policy_value_function, c_puct=5, n_play_out=2000, is_self_play=0):

@@ -6,6 +6,8 @@ trained AI model without installing any DL framework
 """
 import numpy as np
 
+from game import Board
+
 
 def soft_max(x):
     probability = np.exp(x - np.max(x))
@@ -75,11 +77,11 @@ def im2col_indices(x, field_height, field_width, padding=1, stride=1):
 class PolicyValueNetNumpy:
     """policy-value network in numpy """
 
-    def __init__(self, n, net_params):
+    def __init__(self, n: int, net_params):
         self.n = n
         self.params = net_params
 
-    def policy_value_func(self, board):
+    def policy_value_func(self, board: 'Board'):
         """
         input: board
         output: a list of (action, probability) tuples for each available action and the score of the board state

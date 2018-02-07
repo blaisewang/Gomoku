@@ -1,17 +1,17 @@
 import numpy as np
 
-n: int
-chess: [[]]
+n = 0
+chess = [[]]
 
 
-def has_winner(x: int, y: int, player: int, chess_array: [[]]) -> bool:
+def has_winner(x: int, y: int, player: int, chess_list: [[]]):
     global n, chess
-    n = len(chess_array)
-    chess = chess_array
+    n = len(chess_list)
+    chess = chess_list
     return one_dimensional_pattern_match([player, player, player, player, player], False, x, y, 4) > 0
 
 
-def get_1d_matching(pattern: [], x: int, y: int, l_ofs: int, r_ofs: int) -> int:
+def get_1d_matching(pattern: [], x: int, y: int, l_ofs: int, r_ofs: int):
     diff = y - x
     rot = x - (n - 1) + y
     bias = 0 if diff <= 0 else abs(diff)
@@ -35,7 +35,7 @@ def one_dimensional_pattern_match(pattern: [], need_reverse: bool, x: int, y: in
     return number
 
 
-def get_2d_matching(pattern: [[]], x: int, y: int, anchor_x: int, anchor_y: int) -> int:
+def get_2d_matching(pattern: [[]], x: int, y: int, anchor_x: int, anchor_y: int):
     diff = y - x
     u_ofs = anchor_y
     d_ofs = len(pattern) - anchor_y
@@ -54,8 +54,7 @@ def get_2d_matching(pattern: [[]], x: int, y: int, anchor_x: int, anchor_y: int)
     for i in range(x - u_ofs, x + d_ofs):
         offset = rot + (i - x) * 2
         rot_bias = 0 if offset <= 0 else offset
-        anti_diagonal.append(
-            np.diagonal(np.rot90(chess), offset=offset)[i - rot_bias - l_ofs:i - rot_bias + r_ofs])
+        anti_diagonal.append(np.diagonal(np.rot90(chess), offset=offset)[i - rot_bias - l_ofs:i - rot_bias + r_ofs])
 
     return (int(is_pattern_match(pattern, np.array(chess)[x - u_ofs: x + d_ofs, y - l_ofs: y + r_ofs])) +
             int(is_pattern_match(pattern,
@@ -63,8 +62,7 @@ def get_2d_matching(pattern: [[]], x: int, y: int, anchor_x: int, anchor_y: int)
             int(is_pattern_match(pattern, diagonal)) + int(is_pattern_match(pattern, anti_diagonal)))
 
 
-def two_dimensional_pattern_match(pattern: [[]], need_rotate: bool, x: int, y: int, anchor_x: int,
-                                  anchor_y: int) -> int:
+def two_dimensional_pattern_match(pattern: [[]], need_rotate: bool, x: int, y: int, anchor_x: int, anchor_y: int):
     number = get_2d_matching(pattern, x, y, anchor_x, anchor_y)
     if need_rotate:
         number += get_2d_matching(np.rot90(np.rot90(pattern)), x, y, len(pattern) - anchor_x - 1,
@@ -72,7 +70,7 @@ def two_dimensional_pattern_match(pattern: [[]], need_rotate: bool, x: int, y: i
     return number
 
 
-def is_pattern_match(pattern: [[]], array: [[]]) -> bool:
+def is_pattern_match(pattern: [[]], array: [[]]):
     pattern_rows = len(pattern)
     pattern_columns = len(pattern[0])
     array_rows = len(array)

@@ -1,5 +1,3 @@
-import copy
-
 import numpy as np
 
 import evaluate
@@ -42,16 +40,15 @@ class Board:
     def location_to_move(self, x: int, y: int) -> int:
         return (self.n - x - 1) * self.n + y
 
-    def get_available_moves(self) -> []:
+    def get_available_moves(self):
         potential_move_list = []
-        chess = self.get_generalized_chess(copy.deepcopy(self.chess))
         for i in range(4, self.n + 4):
             for j in range(4, self.n + 4):
-                if chess[i][j] == 0:
+                if self.chess[i][j] == 0:
                     potential_move_list.append(self.location_to_move(i - 4, j - 4))
         return sorted(potential_move_list)
 
-    def get_current_state(self) -> []:
+    def get_current_state(self):
         player = 1 if len(self.move_list) % 2 == 0 else 2
         opponent = 2 if player == 1 else 1
         square_state = np.zeros((4, self.n, self.n))
@@ -68,31 +65,31 @@ class Board:
             square_state[3][:, :] = 1.0
         return square_state[:, ::-1, :]
 
-    def get_generalized_chess(self, chess: [[]]) -> [[]]:
-        for i in range(4, self.n + 4):
-            for j in range(4, self.n + 4):
-                if chess[i][j] == 1 or chess[i][j] == 2:
-                    if not self.has_neighbor(i, j):
-                        chess[i][j] = 0
-        return chess
+    # def get_generalized_chess(self, chess: [[]]) -> [[]]:
+    #     for i in range(4, self.n + 4):
+    #         for j in range(4, self.n + 4):
+    #             if chess[i][j] == 1 or chess[i][j] == 2:
+    #                 if not self.has_neighbor(i, j):
+    #                     chess[i][j] = 0
+    #     return chess
 
-    def has_neighbor(self, x, y) -> bool:
-        if len(self.move_list) < 4:
-            return True
-        neighbor_list = [self.chess[x - 1][y - 1], self.chess[x - 1][y], self.chess[x - 1][y + 1],
-                         self.chess[x][y - 1], self.chess[x][y + 1], self.chess[x + 1][y - 1],
-                         self.chess[x + 1][y], self.chess[x + 1][y + 1]]
-        for neighbor in neighbor_list:
-            if neighbor == 1 or neighbor == 2:
-                return True
-        return False
+    # def has_neighbor(self, x, y) -> bool:
+    #     if len(self.move_list) < 4:
+    #         return True
+    #     neighbor_list = [self.chess[x - 1][y - 1], self.chess[x - 1][y], self.chess[x - 1][y + 1],
+    #                      self.chess[x][y - 1], self.chess[x][y + 1], self.chess[x + 1][y - 1],
+    #                      self.chess[x + 1][y], self.chess[x + 1][y + 1]]
+    #     for neighbor in neighbor_list:
+    #         if neighbor == 1 or neighbor == 2:
+    #             return True
+    #     return False
 
     def has_winner(self, x: int, y: int):
         player = 2 if len(self.move_list) % 2 == 0 else 1
         if evaluate.has_winner(x + 4, y + 4, player, self.chess):
             self.winner = player
 
-    def has_ended(self) -> (bool, int):
+    def has_ended(self):
         if len(self.move_list) == 0:
             return False, -1
         x, y = self.move_list[len(self.move_list) - 1]
@@ -120,6 +117,8 @@ class Game:
         self.board.initialize()
         while len(self.board.move_list) < self.board.n * self.board.n:
             player_in_turn = player1 if self.board.get_current_player() == 1 else player2
+            print(index)
+            print(player_in_turn)
             move = player_in_turn.get_action(self.board)
             x, y = self.board.move_to_location(move)
             self.board.add_move(x, y)

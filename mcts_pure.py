@@ -3,9 +3,10 @@ A pure implementation of the Monte Carlo Tree Search (MCTS)
 
 @author: Junxiao Song
 """
-import numpy as np
 import copy
 from operator import itemgetter
+
+import numpy as np
 
 from game import Board
 
@@ -89,7 +90,7 @@ class TreeNode:
         return self._parent is None
 
 
-class MCTS(object):
+class MCTS:
     """A simple implementation of Monte Carlo Tree Search.
     """
 
@@ -124,7 +125,7 @@ class MCTS(object):
 
         action_probability, _ = self._policy(state)
         # Check for end of game
-        end, winner = state.has_ended()
+        end, _ = state.has_ended()
         if not end:
             node.expand(action_probability)
         # Evaluate the leaf node by random roll out
@@ -161,12 +162,10 @@ class MCTS(object):
         Returns:
         the selected action
         """
-        for n in range(self._n_play_out):
-            state_copy = copy.deepcopy(state)
-            self._play_out(state_copy)
+        [self._play_out(copy.deepcopy(state)) for _ in range(self._n_play_out)]
         return max(iter(self._root.children.items()), key=lambda act_node: act_node[1].n_visits)[0]
 
-    def update_with_move(self, last_move):
+    def update_with_move(self, last_move: int):
         """Step forward in the tree, keeping everything we already know about the subtree.
         """
         if last_move in self._root.children:
@@ -176,7 +175,7 @@ class MCTS(object):
             self._root = TreeNode(None, 1.0)
 
 
-class MCTSPlayer(object):
+class MCTSPlayer:
     """AI player based on MCTS"""
 
     def __init__(self, c_puct=5, n_play_out=2000):

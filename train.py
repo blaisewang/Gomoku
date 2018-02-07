@@ -4,13 +4,11 @@ An implementation of the training pipeline of AlphaZero for Gomoku
 @author: Junxiao Song
 """
 
-import copy
 import multiprocessing
 import os
 import pickle
 import random
 import sys
-import threading
 from collections import defaultdict, deque
 
 import numpy as np
@@ -19,7 +17,7 @@ import time
 from game import Board, Game
 from mcts_alphaZero import MCTSPlayer
 from mcts_pure import MCTSPlayer as MCTS_Pure
-from policy_value_net_pytorch import PolicyValueNet
+from policy_value_net import PolicyValueNet
 
 
 def print_log(string: str):
@@ -29,7 +27,7 @@ def print_log(string: str):
 
 
 class TrainPipeline:
-    def __init__(self, n, init_model=None):
+    def __init__(self, n: int, init_model=None):
         # params of the board and the game
         self.n = n
         self.board = Board(self.n)
@@ -38,19 +36,18 @@ class TrainPipeline:
         self.learn_rate = 5e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        self.n_play_out = 400  # number of simulations for each move
+        self.n_play_out = 800  # number of simulations for each move
         self.c_puct = 5
         self.buffer_size = 10000
         self.batch_size = 512  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
-        self.play_batch_size = 1
         self.epochs = 5  # number of train_steps for each update
         self.kl_target = 0.025
         self.check_freq = 50
         self.game_batch_number = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
-        self.pool = multiprocessing.Pool(processes=os.cpu_count())
+        self.pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         # number of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
         self.pure_mcts_play_out_number = 1000
         if init_model:
@@ -63,7 +60,7 @@ class TrainPipeline:
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=self.c_puct,
                                       n_play_out=self.n_play_out, is_self_play=1)
 
-    def get_equal_data(self, play_data):
+    def get_equivalent_data(self, play_data: []):
         """
         augment the data set by rotation and flipping
         play_data: [(state, mcts_probability, winner_z), ..., ...]"""
@@ -71,24 +68,23 @@ class TrainPipeline:
         for state, mcts_probability, winner in play_data:
             for i in [1, 2, 3, 4]:
                 # rotate counterclockwise 
-                equal_state = np.array([np.rot90(s, i) for s in state])
-                equal_mcts_prob = np.rot90(np.flipud(mcts_probability.reshape(self.n, self.n)), i)
-                extend_data.append((equal_state, np.flipud(equal_mcts_prob).flatten(), winner))
+                equivalent_state = np.array([np.rot90(s, i) for s in state])
+                equivalent_mcts_probability = np.rot90(np.flipud(mcts_probability.reshape(self.n, self.n)), i)
+                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probability).flatten(), winner))
                 # flip horizontally
-                equal_state = np.array([np.fliplr(s) for s in equal_state])
-                equal_mcts_prob = np.fliplr(equal_mcts_prob)
-                extend_data.append((equal_state, np.flipud(equal_mcts_prob).flatten(), winner))
+                equivalent_state = np.array([np.fliplr(s) for s in equivalent_state])
+                equivalent_mcts_probability = np.fliplr(equivalent_mcts_probability)
+                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probability).flatten(), winner))
         return extend_data
 
-    def collect_self_play_data(self, n_games=1):
+    def collect_self_play_data(self):
         """collect self-play data for training"""
-        for i in range(n_games):
-            winner, play_data = self.game.start_self_play(self.mcts_player, temp=self.temp)
-            play_data = list(play_data)
-            self.episode_length = len(play_data)
-            # augment the data
-            play_data = self.get_equal_data(play_data)
-            self.data_buffer.extend(play_data)
+        winner, play_data = self.game.start_self_play(self.mcts_player, temp=self.temp)
+        play_data = list(play_data)
+        self.episode_length = len(play_data)
+        # augment the data
+        play_data = self.get_equivalent_data(play_data)
+        self.data_buffer.extend(play_data)
 
     def policy_update(self):
         """update the policy-value net"""
@@ -119,38 +115,23 @@ class TrainPipeline:
         print_log("kl:{:.5f},lr_multiplier:{:.3f},explained_var_old:{:.3f},explained_var_new:{:.3f}".
                   format(kl, self.lr_multiplier, explained_var_old, explained_var_new))
 
-    def policy_evaluate(self, policy_value_net: 'PolicyValueNet', n_games=10):
+    def policy_evaluate(self, n_games=10):
         """
         Evaluate the trained policy by playing games against the pure MCTS player
         Note: this is only for monitoring the progress of training
         """
-        current_mcts_player = MCTSPlayer(policy_value_net.policy_value_func, c_puct=self.c_puct,
+        current_mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=self.c_puct,
                                          n_play_out=self.n_play_out)
         pure_mcts_player = MCTS_Pure(c_puct=5, n_play_out=self.pure_mcts_play_out_number)
         win_cnt = defaultdict(int)
         results = self.pool.map(self.game.start_play,
-                                [(copy.deepcopy(current_mcts_player), copy.deepcopy(pure_mcts_player), i) for i in
-                                 range(n_games)])
+                                [(current_mcts_player, pure_mcts_player, i) for i in range(n_games)])
         for winner in results:
             win_cnt[winner] += 1
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / n_games
         print_log("number_play_outs:{}, win: {}, lose: {}, tie:{}".
                   format(self.pure_mcts_play_out_number, win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
-
-    def evaluate_thread(self, policy_value_net):
-        start_time = time.time()
-        win_ratio = self.policy_evaluate(policy_value_net)
-        net_params = policy_value_net.get_policy_param()  # get model params
-        pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
-        if win_ratio > self.best_win_ratio:
-            print_log("\nNew best policy defeated " + str(self.pure_mcts_play_out_number) + " play out MCTS player ")
-            self.best_win_ratio = win_ratio
-            pickle.dump(net_params, open('best_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
-            if self.best_win_ratio >= 0.8 and self.pure_mcts_play_out_number < 10000:
-                self.pure_mcts_play_out_number += 1000
-                self.best_win_ratio = 0.0
-        print_log(str(time.time() - start_time))
 
     def run(self):
         """run the training pipeline"""
@@ -160,25 +141,38 @@ class TrainPipeline:
                     print("Finish training")
                     break
                 start_time = time.time()
-                self.collect_self_play_data(self.play_batch_size)
+                self.collect_self_play_data()
                 print_log(
                     "batch i:{}, episode_len:{}, in:{}".format(i + 1, self.episode_length, time.time() - start_time))
                 if len(self.data_buffer) > self.batch_size:
-                    start_time = time.time()
                     self.policy_update()
-                    print_log(str(time.time() - start_time))
                     # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     print_log("current self-play batch: {}".format(i + 1))
-                    threading.Thread(target=self.evaluate_thread, args=(copy.deepcopy(self.policy_value_net),)).start()
+                    start_time = time.time()
+                    win_ratio = self.policy_evaluate()
+                    net_params = self.policy_value_net.get_policy_parameter()  # get model params
+                    pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
+                    print_log(str(time.time() - start_time))
+                    if win_ratio > self.best_win_ratio:
+                        print_log("New best policy defeated " + str(
+                            self.pure_mcts_play_out_number) + " play out MCTS player ")
+                        self.best_win_ratio = win_ratio
+                        pickle.dump(net_params, open('best_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
+                        if self.best_win_ratio >= 0.8:
+                            self.best_win_ratio = 0.0
+                            self.pure_mcts_play_out_number += 1000
+                            if self.pure_mcts_play_out_number == 6000:
+                                self.check_freq = 75
+                            elif self.pure_mcts_play_out_number == 8000:
+                                self.check_freq = 100
         except KeyboardInterrupt:
-            print("\n\rquit")
-        except InterruptedError:
             print("\n\rquit")
 
 
 if __name__ == '__main__':
     length = sys.argv[1]
     if length.isdigit():
+        sys.setrecursionlimit(256 * 256)
         training_pipeline = TrainPipeline(int(length))
         training_pipeline.run()
