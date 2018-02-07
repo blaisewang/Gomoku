@@ -147,9 +147,6 @@ class MCTS:
             max_action = max(roll_out_policy_func(state), key=itemgetter(1))[0]
             x, y = state.move_to_location(max_action)
             state.add_move(x, y)
-        else:
-            # If no break from the loop, issue a warning.
-            print("WARNING: roll out reached move limit")
         if winner == -1:  # tie
             return 0
         else:

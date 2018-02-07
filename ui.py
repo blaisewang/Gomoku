@@ -1,10 +1,10 @@
+import copy
 import pickle
 import threading
 
-import copy
 import wx
 
-import game
+from game import Board
 from mcts_alphaZero import MCTSPlayer
 from policy_value_net_numpy import PolicyValueNetNumpy
 
@@ -50,7 +50,7 @@ class GomokuFrame(wx.Frame):
             raise Exception('Illegal Parameter N')
 
         self.thread = threading.Thread()
-        self.board = game.Board(n)
+        self.board = Board(n)
         self.row_name_list = self.row_name_list[STANDARD_LENGTH - n: STANDARD_LENGTH]
         self.column_name_list = self.column_name_list[0:n]
         self.grid_length = BLOCK_LENGTH * (n - 1)
@@ -158,7 +158,7 @@ class GomokuFrame(wx.Frame):
 
     def on_replay_button_click(self, _):
         if not self.thread.is_alive():
-            self.board = game.Board(self.n)
+            self.board.initialize()
             self.moves = 0
             self.current_move = 0
             self.has_set_ai_player = False
@@ -220,6 +220,7 @@ class GomokuFrame(wx.Frame):
             self.analysis_button.Disable()
 
     def initialize_user_interface(self):
+        self.board = Board(self.n)
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_LEFT_UP, self.on_click)
         self.Bind(wx.EVT_BUTTON, self.on_back_button_click, self.back_button)
@@ -231,7 +232,6 @@ class GomokuFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_analysis_button_click, self.analysis_button)
         self.Centre()
         self.Show(True)
-        self.board = game.Board(self.n)
 
     def repaint_board(self):
         self.draw_board()

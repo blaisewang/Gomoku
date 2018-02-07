@@ -2,9 +2,9 @@
 @author: Junxiao Song
 """
 
+import lasagne
 import theano
 import theano.tensor as t
-import lasagne
 
 from game import Board
 

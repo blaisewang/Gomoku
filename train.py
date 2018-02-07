@@ -4,15 +4,15 @@ An implementation of the training pipeline of AlphaZero for Gomoku
 @author: Junxiao Song
 """
 
+from collections import defaultdict, deque
 import multiprocessing
 import os
 import pickle
 import random
 import sys
-from collections import defaultdict, deque
+import time
 
 import numpy as np
-import time
 
 from game import Board, Game
 from mcts_alphaZero import MCTSPlayer
