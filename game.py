@@ -12,25 +12,21 @@ class Board:
             raise Exception('Illegal Parameter N')
         self.winner = 0
         self.move_list = []
-        self.chess = [[-2 for _ in range(self.n + 8)] for _ in range(self.n + 8)]
-        for i in range(4, self.n + 4):
-            for j in range(4, self.n + 4):
-                self.chess[i][j] = 0
+        self.chess = np.repeat(-2, (self.n + 8) * (self.n + 8)).reshape(self.n + 8, self.n + 8)
+        self.chess[4:self.n + 4, 4:self.n + 4] = 0
 
     def initialize(self):
         self.winner = 0
         self.move_list = []
-        for i in range(4, self.n + 4):
-            for j in range(4, self.n + 4):
-                self.chess[i][j] = 0
+        self.chess[4:self.n + 4, 4:self.n + 4] = 0
 
     def add_move(self, x: int, y: int):
         self.move_list.append((x, y))
-        self.chess[x + 4][y + 4] = 2 if len(self.move_list) % 2 == 0 else 1
+        self.chess[x + 4, y + 4] = 2 if len(self.move_list) % 2 == 0 else 1
 
     def remove_move(self):
         x, y = self.move_list.pop()
-        self.chess[x + 4][y + 4] = 0
+        self.chess[x + 4, y + 4] = 0
 
     def move_to_location(self, move: int) -> (int, int):
         x = self.n - move // self.n - 1
@@ -42,22 +38,20 @@ class Board:
 
     def get_available_moves(self):
         potential_move_list = []
-        for i in range(4, self.n + 4):
-            for j in range(4, self.n + 4):
-                if self.chess[i][j] == 0:
-                    potential_move_list.append(self.location_to_move(i - 4, j - 4))
+        for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
+            if not value:
+                potential_move_list.append(self.location_to_move(x, y))
         return sorted(potential_move_list)
 
     def get_current_state(self):
         player = 1 if len(self.move_list) % 2 == 0 else 2
         opponent = 2 if player == 1 else 1
         square_state = np.zeros((4, self.n, self.n))
-        for i in range(4, self.n + 4):
-            for j in range(4, self.n + 4):
-                if self.chess[i][j] == player:
-                    square_state[0][self.n - i + 3][j - 4] = 1.0
-                elif self.chess[i][j] == opponent:
-                    square_state[1][self.n - i + 3][j - 4] = 1.0
+        for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
+            if value == player:
+                square_state[0][self.n - x - 1][y] = 1.0
+            elif value == opponent:
+                square_state[1][self.n - x - 1][y] = 1.0
         if len(self.move_list) > 0:
             x, y = self.move_list[len(self.move_list) - 1]
             square_state[2][self.n - x - 1][y] = 1.0

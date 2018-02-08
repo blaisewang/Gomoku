@@ -2,6 +2,7 @@ import copy
 import pickle
 import threading
 
+import numpy as np
 import wx
 
 from game import Board
@@ -109,7 +110,7 @@ class GomokuFrame(wx.Frame):
             model_file = 'best_policy.model'
             policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
             best_policy = PolicyValueNetNumpy(self.n, policy_param)
-            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=800)
+            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()
             self.ai_hint_button.Enable()
@@ -270,37 +271,18 @@ class GomokuFrame(wx.Frame):
     def draw_chess(self):
         dc = wx.ClientDC(self)
         self.disable_buttons()
-        for i in range(4, self.n + 4):
-            for j in range(4, self.n + 4):
-                if self.board.chess[j][i] > 0:
-                    dc.SetBrush(wx.Brush(wx.BLACK if self.board.chess[j][i] == 1 else wx.WHITE))
-                    dc.DrawCircle(self.grid_position_x + (i - 4) * BLOCK_LENGTH,
-                                  self.grid_position_y + (j - 4) * BLOCK_LENGTH, self.piece_radius)
+        for x, y in np.ndindex(self.board.chess[4:self.n + 4, 4:self.n + 4].shape):
+            if self.board.chess[y + 4, x + 4] > 0:
+                dc.SetBrush(wx.Brush(wx.BLACK if self.board.chess[y + 4, x + 4] == 1 else wx.WHITE))
+                dc.DrawCircle(self.grid_position_x + x * BLOCK_LENGTH,
+                              self.grid_position_y + y * BLOCK_LENGTH, self.piece_radius)
         if self.current_move > 0:
             x, y = self.chess_record[self.current_move - 1]
             x = self.grid_position_x + x * BLOCK_LENGTH
             y = self.grid_position_y + y * BLOCK_LENGTH
-            dc.SetBrush(wx.Brush(wx.BLACK if self.current_move % 2 == 1 == 1 else wx.WHITE))
+            dc.SetBrush(wx.Brush(wx.BLACK if self.current_move % 2 == 1 else wx.WHITE))
             dc.SetPen(wx.Pen(wx.WHITE if self.current_move % 2 == 1 else wx.BLACK))
             dc.DrawCircle(x, y, self.inner_circle_radius)
-
-    def draw_banner(self, result: int):
-        x = (WIN_WIDTH - 216) / 2 + 16
-        if result == 1:
-            string = "BLACK WIN"
-        elif result == 2:
-            string = "WHITE WIN"
-        else:
-            string = "DRAW"
-            x = (WIN_WIDTH - 97) / 2 + 16
-        dc = wx.ClientDC(self)
-        dc.SetBrush(wx.Brush(wx.WHITE))
-        dc.DrawRectangle((WIN_WIDTH - BANNER_WIDTH) / 2 + 15, (WIN_HEIGHT - BANNER_HEIGHT) / 2 - HEIGHT_OFFSET + 5,
-                         BANNER_WIDTH, BANNER_HEIGHT)
-        dc.SetPen(wx.Pen(wx.BLACK))
-        dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, False))
-        dc.DrawText(string, x, (WIN_HEIGHT - 26) / 2 - HEIGHT_OFFSET)
-        self.is_banner_displayed = True
 
     def draw_move(self, x: int, y: int) -> bool:
         if self.current_move == 0:
@@ -322,6 +304,24 @@ class GomokuFrame(wx.Frame):
             return end
         return False
 
+    def draw_banner(self, result: int):
+        x = (WIN_WIDTH - 216) / 2 + 16
+        if result == 1:
+            string = "BLACK WIN"
+        elif result == 2:
+            string = "WHITE WIN"
+        else:
+            string = "DRAW"
+            x = (WIN_WIDTH - 97) / 2 + 16
+        dc = wx.ClientDC(self)
+        dc.SetBrush(wx.Brush(wx.WHITE))
+        dc.DrawRectangle((WIN_WIDTH - BANNER_WIDTH) / 2 + 15, (WIN_HEIGHT - BANNER_HEIGHT) / 2 - HEIGHT_OFFSET + 5,
+                         BANNER_WIDTH, BANNER_HEIGHT)
+        dc.SetPen(wx.Pen(wx.BLACK))
+        dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, False))
+        dc.DrawText(string, x, (WIN_HEIGHT - 26) / 2 - HEIGHT_OFFSET)
+        self.is_banner_displayed = True
+
     def on_click(self, e):
         if not self.thread.is_alive():
             if self.board.winner == 0:
@@ -334,7 +334,7 @@ class GomokuFrame(wx.Frame):
                     x = int(x / BLOCK_LENGTH)
                     y = int(y / BLOCK_LENGTH)
                     if 0 <= x < self.n and 0 <= y < self.n:
-                        if self.board.chess[y + 4][x + 4] == 0:
+                        if self.board.chess[y + 4, x + 4] == 0:
                             self.analysis_button.Enable()
                             self.black_button.Disable()
                             self.white_button.Disable()

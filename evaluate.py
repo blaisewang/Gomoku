@@ -1,10 +1,10 @@
 import numpy as np
 
 n = 0
-chess = [[]]
+chess = np.zeros(0)
 
 
-def has_winner(x: int, y: int, player: int, chess_list: [[]]):
+def has_winner(x: int, y: int, player: int, chess_list):
     global n, chess
     n = len(chess_list)
     chess = chess_list
@@ -17,8 +17,8 @@ def get_1d_matching(pattern: [], x: int, y: int, l_ofs: int, r_ofs: int):
     bias = 0 if diff <= 0 else abs(diff)
     rot_bias = 0 if rot <= 0 else abs(rot)
 
-    return (int(is_pattern_match([pattern], [np.array(chess)[x, y - l_ofs: y + r_ofs]])) +
-            int(is_pattern_match([pattern], [np.array(chess)[x - l_ofs: x + r_ofs, y]])) +
+    return (int(is_pattern_match([pattern], [chess[x, y - l_ofs: y + r_ofs]])) +
+            int(is_pattern_match([pattern], [chess[x - l_ofs: x + r_ofs, y]])) +
             int(is_pattern_match([pattern], [np.diagonal(chess, offset=diff)[y - bias - l_ofs:y - bias + r_ofs]])) +
             int(is_pattern_match([pattern], [
                 np.diagonal(np.rot90(chess), offset=rot)[x - rot_bias - l_ofs:x - rot_bias + r_ofs]])))
