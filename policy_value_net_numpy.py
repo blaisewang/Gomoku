@@ -10,9 +10,9 @@ from game import Board
 
 
 def soft_max(x):
-    probability = np.exp(x - np.max(x))
-    probability /= np.sum(probability)
-    return probability
+    probabilities = np.exp(x - np.max(x))
+    probabilities /= np.sum(probabilities)
+    return probabilities
 
 
 def rectified_linear_unit(x):
@@ -84,7 +84,7 @@ class PolicyValueNetNumpy:
     def policy_value_func(self, board: 'Board'):
         """
         input: board
-        output: a list of (action, probability) tuples for each available action and the score of the board state
+        output: a list of (action, probabilities) tuples for each available action and the score of the board state
         """
         legal_positions = board.get_available_moves()
         current_state = board.get_current_state()
@@ -96,11 +96,11 @@ class PolicyValueNetNumpy:
         # policy head
         x_p = rectified_linear_unit(convolutional_forward(x, self.params[6], self.params[7], padding=0))
         x_p = fc_forward(x_p.flatten(), self.params[8], self.params[9])
-        act_probability = soft_max(x_p)
+        act_probabilities = soft_max(x_p)
         # value head
         x_v = rectified_linear_unit(convolutional_forward(x, self.params[10], self.params[11], padding=0))
         x_v = rectified_linear_unit(fc_forward(x_v.flatten(), self.params[12], self.params[13]))
         value = np.tanh(fc_forward(x_v, self.params[14], self.params[15]))[0]
 
-        act_probability = zip(legal_positions, act_probability.flatten()[legal_positions])
-        return act_probability, value
+        act_probabilities = zip(legal_positions, act_probabilities.flatten()[legal_positions])
+        return act_probabilities, value

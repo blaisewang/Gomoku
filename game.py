@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 import evaluate
@@ -59,24 +61,24 @@ class Board:
             square_state[3][:, :] = 1.0
         return square_state[:, ::-1, :]
 
-    # def get_generalized_chess(self, chess: [[]]) -> [[]]:
-    #     for i in range(4, self.n + 4):
-    #         for j in range(4, self.n + 4):
-    #             if chess[i][j] == 1 or chess[i][j] == 2:
-    #                 if not self.has_neighbor(i, j):
-    #                     chess[i][j] = 0
-    #     return chess
+    def get_generalized_chess(self):
+        chess = copy.deepcopy(self.chess)
+        if len(self.move_list) > 1:
+            for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
+                if value == 1 or value == 2:
+                    if not self.has_neighbor(x + 4, y + 4, self.chess):
+                        chess[x + 4, y + 4] = 0
+        return chess
 
-    # def has_neighbor(self, x, y) -> bool:
-    #     if len(self.move_list) < 4:
-    #         return True
-    #     neighbor_list = [self.chess[x - 1][y - 1], self.chess[x - 1][y], self.chess[x - 1][y + 1],
-    #                      self.chess[x][y - 1], self.chess[x][y + 1], self.chess[x + 1][y - 1],
-    #                      self.chess[x + 1][y], self.chess[x + 1][y + 1]]
-    #     for neighbor in neighbor_list:
-    #         if neighbor == 1 or neighbor == 2:
-    #             return True
-    #     return False
+    @staticmethod
+    def has_neighbor(x, y, chess) -> bool:
+        neighbor_list = [chess[x - 1, y - 1], chess[x - 1, y], chess[x - 1, y + 1],
+                         chess[x, y - 1], chess[x, y + 1], chess[x + 1, y - 1],
+                         chess[x + 1, y], chess[x + 1, y + 1]]
+        for neighbor in neighbor_list:
+            if neighbor == 1 or neighbor == 2:
+                return True
+        return False
 
     def has_winner(self, x: int, y: int):
         player = 2 if len(self.move_list) % 2 == 0 else 1
@@ -122,15 +124,15 @@ class Game:
 
     def start_self_play(self, player: 'MCTSPlayer', temp=1e-3):
         """ start a self-play game using a MCTS player, reuse the search tree
-        store the self-play data: (state, mcts_probability, z)
+        store the self-play data: (state, mcts_probabilities, z)
         """
         self.board.initialize()
-        states, mcts_probability, current_players = [], [], []
+        states, mcts_probabilities, current_players = [], [], []
         while len(self.board.move_list) < self.board.n * self.board.n:
-            move, move_probability = player.get_action(self.board, temp=temp, return_probability=1)
+            move, move_probabilities = player.get_action(self.board, temp=temp, return_probability=1)
             # store the data
             states.append(self.board.get_current_state())
-            mcts_probability.append(move_probability)
+            mcts_probabilities.append(move_probabilities)
             current_players.append(self.board.get_current_player())
             # perform a move
             x, y = self.board.move_to_location(move)
@@ -144,4 +146,4 @@ class Game:
                     winners_z[np.array(current_players) != winner] = -1.0
                 # reset MCTS root node
                 player.reset_player()
-                return winner, zip(states, mcts_probability, winners_z)
+                return winner, zip(states, mcts_probabilities, winners_z)

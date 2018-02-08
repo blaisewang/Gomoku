@@ -18,7 +18,7 @@ def roll_out_policy_func(board: 'Board'):
 
 
 def policy_value_func(board: 'Board'):
-    """a function that takes in a state and outputs a list of (action, probability)
+    """a function that takes in a state and outputs a list of (action, probabilities)
     tuples and a score for the state"""
     # return uniform probabilities and 0 score for pure MCTS
     return zip(board.get_available_moves(),
@@ -96,7 +96,7 @@ class MCTS:
 
     def __init__(self, policy_value_function, c_puct=5, n_play_out=10000):
         """Arguments:
-        policy_value_func -- a function that takes in a board state and outputs a list of (action, probability)
+        policy_value_func -- a function that takes in a board state and outputs a list of (action, probabilities)
             tuples and also a score in [-1, 1] (i.e. the expected value of the end game score from 
             the current player's perspective) for the current player.
         c_puct -- a number in (0, inf) that controls how quickly exploration converges to the
@@ -123,11 +123,11 @@ class MCTS:
             x, y = state.move_to_location(action)
             state.add_move(x, y)
 
-        action_probability, _ = self._policy(state)
+        action_probabilities, _ = self._policy(state)
         # Check for end of game
         end, _ = state.has_ended()
         if not end:
-            node.expand(action_probability)
+            node.expand(action_probabilities)
         # Evaluate the leaf node by random roll out
         leaf_value = self._evaluate_roll_out(state)
         # Update value and visit count of nodes in this traversal.

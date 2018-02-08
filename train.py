@@ -43,7 +43,7 @@ class TrainPipeline:
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.epochs = 5  # number of train_steps for each update
         self.kl_target = 0.025
-        self.check_freq = 50
+        self.check_freq = 100
         self.game_batch_number = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
@@ -63,18 +63,18 @@ class TrainPipeline:
     def get_equivalent_data(self, play_data: []):
         """
         augment the data set by rotation and flipping
-        play_data: [(state, mcts_probability, winner_z), ..., ...]"""
+        play_data: [(state, mcts_probabilities, winner_z), ..., ...]"""
         extend_data = []
-        for state, mcts_probability, winner in play_data:
+        for state, mcts_probabilities, winner in play_data:
             for i in [1, 2, 3, 4]:
                 # rotate counterclockwise 
                 equivalent_state = np.array([np.rot90(s, i) for s in state])
-                equivalent_mcts_probability = np.rot90(np.flipud(mcts_probability.reshape(self.n, self.n)), i)
-                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probability).flatten(), winner))
+                equivalent_mcts_probabilities = np.rot90(np.flipud(mcts_probabilities.reshape(self.n, self.n)), i)
+                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probabilities).flatten(), winner))
                 # flip horizontally
                 equivalent_state = np.array([np.fliplr(s) for s in equivalent_state])
-                equivalent_mcts_probability = np.fliplr(equivalent_mcts_probability)
-                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probability).flatten(), winner))
+                equivalent_mcts_probabilities = np.fliplr(equivalent_mcts_probabilities)
+                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probabilities).flatten(), winner))
         return extend_data
 
     def collect_self_play_data(self):
@@ -93,15 +93,16 @@ class TrainPipeline:
 
         mini_batch = random.sample(self.data_buffer, self.batch_size)
         state_batch = [data[0] for data in mini_batch]
-        mcts_probability_batch = [data[1] for data in mini_batch]
+        mcts_probabilities_batch = [data[1] for data in mini_batch]
         winner_batch = [data[2] for data in mini_batch]
-        old_probability, old_v = self.policy_value_net.policy_value(state_batch)
+        old_probabilities, old_v = self.policy_value_net.policy_value(state_batch)
         for i in range(self.epochs):
-            self.policy_value_net.train_step(state_batch, mcts_probability_batch, winner_batch,
+            self.policy_value_net.train_step(state_batch, mcts_probabilities_batch, winner_batch,
                                              self.learn_rate * self.lr_multiplier)
-            new_probability, new_v = self.policy_value_net.policy_value(state_batch)
+            new_probabilities, new_v = self.policy_value_net.policy_value(state_batch)
             kl = np.mean(
-                np.sum(old_probability * (np.log(old_probability + 1e-10) - np.log(new_probability + 1e-10)), axis=1))
+                np.sum(old_probabilities * (np.log(old_probabilities + 1e-10) - np.log(new_probabilities + 1e-10)),
+                       axis=1))
             if kl > self.kl_target * 4:  # early stopping if D_KL diverges badly
                 break
         # adaptively adjust the learning rate
@@ -162,10 +163,6 @@ class TrainPipeline:
                         if self.best_win_ratio >= 0.8:
                             self.best_win_ratio = 0.0
                             self.pure_mcts_play_out_number += 1000
-                            if self.pure_mcts_play_out_number == 6000:
-                                self.check_freq = 75
-                            elif self.pure_mcts_play_out_number == 8000:
-                                self.check_freq = 100
         except KeyboardInterrupt:
             print("\n\rquit")
 
@@ -174,5 +171,5 @@ if __name__ == '__main__':
     length = sys.argv[1]
     if length.isdigit():
         sys.setrecursionlimit(256 * 256)
-        training_pipeline = TrainPipeline(int(length))
+        training_pipeline = TrainPipeline(int(length), init_model="bp.model")
         training_pipeline.run()
