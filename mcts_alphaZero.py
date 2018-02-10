@@ -143,7 +143,6 @@ class MCTS:
         act_visits = [(act, node.n_visits) for act, node in self._root.children.items()]
         acts, visits = zip(*act_visits)
         act_probabilities = soft_max(1.0 / temp * np.log(np.array(visits) + 1e-10))
-
         return acts, act_probabilities
 
     def update_with_move(self, last_move: int):
@@ -171,12 +170,6 @@ class MCTSPlayer:
         # the pi vector returned by MCTS as in the alphaGo Zero paper
         if len(board.move_list) < board.n * board.n:
             acts, probabilities = self.mcts.get_move_probabilities(board, temp)
-            # if len(board.move_list) % 2 == 1:
-            #     chess = board.get_generalized_chess()
-            #     for i, act in enumerate(acts):
-            #         x, y = board.move_to_location(act)
-            #         if not board.has_neighbor(x + 4, y + 4, chess):
-            #             probabilities[i] = 0.0
             if return_probability == 2:
                 return acts, probabilities
             move_probabilities[list(acts)] = probabilities

@@ -107,7 +107,7 @@ class GomokuFrame(wx.Frame):
         self.forward_button.Disable()
         self.replay_button.Disable()
         try:
-            model_file = 'current_policy.model'
+            model_file = 'best_policy.model'
             policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
             best_policy = PolicyValueNetNumpy(self.n, policy_param)
             self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
