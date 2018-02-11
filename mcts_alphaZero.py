@@ -168,7 +168,7 @@ class MCTSPlayer:
     def get_action(self, board, temp=1e-3, return_probability=0):
         move_probabilities = np.zeros(board.n * board.n)
         # the pi vector returned by MCTS as in the alphaGo Zero paper
-        if len(board.move_list) < board.n * board.n:
+        if board.get_move_number() < board.n * board.n:
             acts, probabilities = self.mcts.get_move_probabilities(board, temp)
             if return_probability == 2:
                 return acts, probabilities

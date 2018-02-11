@@ -1,5 +1,3 @@
-import copy
-
 import numpy as np
 
 import evaluate
@@ -24,7 +22,7 @@ class Board:
 
     def add_move(self, x: int, y: int):
         self.move_list.append((x, y))
-        self.chess[x + 4, y + 4] = 2 if len(self.move_list) % 2 == 0 else 1
+        self.chess[x + 4, y + 4] = 2 if self.get_move_number() % 2 == 0 else 1
 
     def remove_move(self):
         x, y = self.move_list.pop()
@@ -46,7 +44,7 @@ class Board:
         return sorted(potential_move_list)
 
     def get_current_state(self):
-        player = 1 if len(self.move_list) % 2 == 0 else 2
+        player = self.get_current_player()
         opponent = 2 if player == 1 else 1
         square_state = np.zeros((4, self.n, self.n))
         for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
@@ -54,52 +52,36 @@ class Board:
                 square_state[0][self.n - x - 1][y] = 1.0
             elif value == opponent:
                 square_state[1][self.n - x - 1][y] = 1.0
-        if len(self.move_list) > 0:
-            x, y = self.move_list[len(self.move_list) - 1]
+        if self.get_move_number() > 0:
+            x, y = self.move_list[self.get_move_number() - 1]
             square_state[2][self.n - x - 1][y] = 1.0
         if player == 1:
             square_state[3][:, :] = 1.0
         return square_state[:, ::-1, :]
 
-    def get_generalized_chess(self):
-        chess = copy.deepcopy(self.chess)
-        if len(self.move_list) > 1:
-            for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
-                if value == 1 or value == 2:
-                    if not self.has_neighbor(x + 4, y + 4, self.chess):
-                        chess[x + 4, y + 4] = 0
-        return chess
+    def get_move_number(self):
+        return len(self.move_list)
 
-    @staticmethod
-    def has_neighbor(x, y, chess) -> bool:
-        neighbor_list = [chess[x - 1, y - 1], chess[x - 1, y], chess[x - 1, y + 1],
-                         chess[x, y - 1], chess[x, y + 1], chess[x + 1, y - 1],
-                         chess[x + 1, y], chess[x + 1, y + 1]]
-        for neighbor in neighbor_list:
-            if neighbor == 1 or neighbor == 2:
-                return True
-        return False
+    def get_current_player(self):
+        return 1 if self.get_move_number() % 2 == 0 else 2
 
     def has_winner(self, x: int, y: int):
-        player = 2 if len(self.move_list) % 2 == 0 else 1
+        player = 2 if self.get_move_number() % 2 == 0 else 1
         if evaluate.has_winner(x + 4, y + 4, player, self.chess):
             self.winner = player
 
     def has_ended(self):
-        if len(self.move_list) == 0:
+        if self.get_move_number() == 0:
             return False, -1
-        x, y = self.move_list[len(self.move_list) - 1]
+        x, y = self.move_list[self.get_move_number() - 1]
         self.has_winner(x, y)
         if self.winner != 0:
             return True, self.winner
         else:
-            if len(self.move_list) == self.n * self.n:
+            if self.get_move_number() == self.n * self.n:
                 return True, -1
             else:
                 return False, -1
-
-    def get_current_player(self):
-        return 1 if len(self.move_list) % 2 == 0 else 2
 
 
 class Game:
@@ -111,7 +93,7 @@ class Game:
         if index % 2:
             player1, player2 = player2, player1
         self.board.initialize()
-        while len(self.board.move_list) < self.board.n * self.board.n:
+        while self.board.get_move_number() < self.board.n * self.board.n:
             player_in_turn = player1 if self.board.get_current_player() == 1 else player2
             move = player_in_turn.get_action(self.board)
             x, y = self.board.move_to_location(move)
@@ -128,7 +110,7 @@ class Game:
         """
         self.board.initialize()
         states, mcts_probabilities, current_players = [], [], []
-        while len(self.board.move_list) < self.board.n * self.board.n:
+        while self.board.get_move_number() < self.board.n * self.board.n:
             move, move_probabilities = player.get_action(self.board, temp=temp, return_probability=1)
             # store the data
             states.append(self.board.get_current_state())

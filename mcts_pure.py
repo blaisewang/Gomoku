@@ -179,7 +179,7 @@ class MCTSPlayer:
         self.mcts = MCTS(policy_value_func, c_puct, n_play_out)
 
     def get_action(self, board: 'Board'):
-        if len(board.move_list) < board.n * board.n:
+        if board.get_move_number() < board.n * board.n:
             move = self.mcts.get_move(board)
             self.mcts.update_with_move(-1)
             return move

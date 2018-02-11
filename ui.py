@@ -110,7 +110,7 @@ class GomokuFrame(wx.Frame):
             model_file = 'best_policy.model'
             policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
             best_policy = PolicyValueNetNumpy(self.n, policy_param)
-            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
+            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=1000)
             self.black_button.Enable()
             self.white_button.Enable()
             self.ai_hint_button.Enable()
@@ -127,7 +127,7 @@ class GomokuFrame(wx.Frame):
             self.current_move -= 1
             self.board.winner = 0
             self.board.remove_move()
-            if self.has_set_ai_player and (self.board.winner == 0 or len(self.board.move_list) < self.n * self.n):
+            if self.has_set_ai_player and (self.board.winner == 0 or self.board.get_move_number() < self.n * self.n):
                 self.current_move -= 1
                 self.board.remove_move()
             self.forward_button.Enable()
@@ -144,7 +144,7 @@ class GomokuFrame(wx.Frame):
             x, y = self.chess_record[self.current_move]
             self.current_move += 1
             self.board.add_move(y, x)
-            if self.has_set_ai_player and (self.board.winner == 0 or len(self.board.move_list) < self.n * self.n):
+            if self.has_set_ai_player and (self.board.winner == 0 or self.board.get_move_number() < self.n * self.n):
                 x, y = self.chess_record[self.current_move]
                 self.current_move += 1
                 self.board.add_move(y, x)

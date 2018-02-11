@@ -5,8 +5,8 @@ An implementation of the training pipeline of AlphaZero for Gomoku
 """
 
 from collections import defaultdict, deque
-import multiprocessing
 import os
+import multiprocessing
 import pickle
 import random
 import sys
@@ -43,7 +43,7 @@ class TrainPipeline:
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.epochs = 5  # number of train_steps for each update
         self.kl_target = 0.025
-        self.check_freq = 100
+        self.check_freq = 1000
         self.game_batch_number = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
@@ -67,7 +67,7 @@ class TrainPipeline:
         extend_data = []
         for state, mcts_probabilities, winner in play_data:
             for i in [1, 2, 3, 4]:
-                # rotate counterclockwise 
+                # rotate counterclockwise
                 equivalent_state = np.array([np.rot90(s, i) for s in state])
                 equivalent_mcts_probabilities = np.rot90(np.flipud(mcts_probabilities.reshape(self.n, self.n)), i)
                 extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probabilities).flatten(), winner))
@@ -153,7 +153,7 @@ class TrainPipeline:
                     start_time = time.time()
                     win_ratio = self.policy_evaluate()
                     net_params = self.policy_value_net.get_policy_parameter()  # get model params
-                    pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(net_params, open('current_policy.model.' + str(i + 1), 'wb'), pickle.HIGHEST_PROTOCOL)
                     print_log(str(time.time() - start_time))
                     if win_ratio > self.best_win_ratio:
                         print_log("New best policy defeated " + str(
@@ -171,5 +171,5 @@ if __name__ == '__main__':
     length = sys.argv[1]
     if length.isdigit():
         sys.setrecursionlimit(256 * 256)
-        training_pipeline = TrainPipeline(int(length), init_model="bp.model")
+        training_pipeline = TrainPipeline(int(length), init_model="best_policy.model")
         training_pipeline.run()
