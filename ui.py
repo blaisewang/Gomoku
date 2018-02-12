@@ -110,7 +110,7 @@ class GomokuFrame(wx.Frame):
             model_file = 'best_policy.model'
             policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
             best_policy = PolicyValueNetNumpy(self.n, policy_param)
-            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=1000)
+            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()
             self.ai_hint_button.Enable()
@@ -188,6 +188,8 @@ class GomokuFrame(wx.Frame):
 
     def on_ai_hint_button_click(self, _):
         if not self.thread.is_alive():
+            self.black_button.Disable()
+            self.white_button.Disable()
             self.ai_next_move()
 
     def on_analysis_button_click(self, _):
