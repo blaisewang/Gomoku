@@ -2,6 +2,7 @@ import copy
 import pickle
 import threading
 
+import evaluate
 import numpy as np
 import wx
 
@@ -107,10 +108,10 @@ class GomokuFrame(wx.Frame):
         self.forward_button.Disable()
         self.replay_button.Disable()
         try:
-            model_file = 'best_policy.model'
+            model_file = 'best_policy.model.1000'
             policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
             best_policy = PolicyValueNetNumpy(self.n, policy_param)
-            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=400)
+            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=1000)
             self.black_button.Enable()
             self.white_button.Enable()
             self.ai_hint_button.Enable()
@@ -131,13 +132,13 @@ class GomokuFrame(wx.Frame):
                 self.current_move -= 1
                 self.board.remove_move()
             self.forward_button.Enable()
-            self.analysis_button.Enable()
             self.repaint_board()
             if self.current_move == 0:
                 self.back_button.Disable()
                 self.replay_button.Disable()
             if self.mcts_player is not None:
                 self.ai_hint_button.Enable()
+                self.analysis_button.Enable()
 
     def on_forward_button_click(self, _):
         if not self.thread.is_alive():
@@ -150,12 +151,13 @@ class GomokuFrame(wx.Frame):
                 self.board.add_move(y, x)
             self.back_button.Enable()
             self.replay_button.Enable()
-            self.analysis_button.Enable()
             self.repaint_board()
             if self.current_move == self.moves:
                 self.forward_button.Disable()
             if self.current_move == self.n * self.n:
                 self.ai_hint_button.Disable()
+            if self.mcts_player is not None:
+                self.analysis_button.Enable()
 
     def on_replay_button_click(self, _):
         if not self.thread.is_alive():
@@ -337,10 +339,12 @@ class GomokuFrame(wx.Frame):
                     y = int(y / BLOCK_LENGTH)
                     if 0 <= x < self.n and 0 <= y < self.n:
                         if self.board.chess[y + 4, x + 4] == 0:
-                            self.analysis_button.Enable()
-                            self.black_button.Disable()
-                            self.white_button.Disable()
+                            if self.mcts_player is not None:
+                                self.analysis_button.Enable()
+                                self.black_button.Disable()
+                                self.white_button.Disable()
                             self.board.add_move(y, x)
+                            evaluate.get_state(self.board.chess, self.board.get_move_number())
                             has_end = self.draw_move(x, y)
                             if self.has_set_ai_player and not has_end:
                                 self.thread = threading.Thread(target=self.ai_next_move, args=())
