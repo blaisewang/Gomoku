@@ -43,7 +43,7 @@ class TrainPipeline:
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.epochs = 5  # number of train_steps for each update
         self.kl_target = 0.025
-        self.check_freq = 1000
+        self.check_freq = 50
         self.game_batch_number = 10000
         self.best_win_ratio = 0.0
         self.episode_length = 0
@@ -53,37 +53,18 @@ class TrainPipeline:
         if init_model:
             # start training from an initial policy-value net
             policy_param = pickle.load(open(init_model, 'rb'))
-            self.policy_value_net = PolicyValueNet(self.n, net_params=policy_param)
+            self.policy_value_net = PolicyValueNet(net_params=policy_param)
         else:
             # start training from a new policy-value net
-            self.policy_value_net = PolicyValueNet(self.n)
+            self.policy_value_net = PolicyValueNet()
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=self.c_puct,
                                       n_play_out=self.n_play_out, is_self_play=1)
-
-    def get_equivalent_data(self, play_data: []):
-        """
-        augment the data set by rotation and flipping
-        play_data: [(state, mcts_probabilities, winner_z), ..., ...]"""
-        extend_data = []
-        for state, mcts_probabilities, winner in play_data:
-            for i in [1, 2, 3, 4]:
-                # rotate counterclockwise
-                equivalent_state = np.array([np.rot90(s, i) for s in state])
-                equivalent_mcts_probabilities = np.rot90(np.flipud(mcts_probabilities.reshape(self.n, self.n)), i)
-                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probabilities).flatten(), winner))
-                # flip horizontally
-                equivalent_state = np.array([np.fliplr(s) for s in equivalent_state])
-                equivalent_mcts_probabilities = np.fliplr(equivalent_mcts_probabilities)
-                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_probabilities).flatten(), winner))
-        return extend_data
 
     def collect_self_play_data(self):
         """collect self-play data for training"""
         winner, play_data = self.game.start_self_play(self.mcts_player, temp=self.temp)
         play_data = list(play_data)
         self.episode_length = len(play_data)
-        # augment the data
-        play_data = self.get_equivalent_data(play_data)
         self.data_buffer.extend(play_data)
 
     def policy_update(self):
@@ -171,5 +152,5 @@ if __name__ == '__main__':
     length = sys.argv[1]
     if length.isdigit():
         sys.setrecursionlimit(256 * 256)
-        training_pipeline = TrainPipeline(int(length), init_model="best_policy.model")
+        training_pipeline = TrainPipeline(int(length))
         training_pipeline.run()

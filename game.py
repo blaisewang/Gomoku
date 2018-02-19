@@ -6,10 +6,7 @@ from mcts_alphaZero import MCTSPlayer
 
 class Board:
     def __init__(self, n: int):
-        if 8 <= n <= 15:
-            self.n = n
-        else:
-            raise Exception('Illegal Parameter N')
+        self.n = n
         self.winner = 0
         self.move_list = []
         self.chess = np.repeat(-2, (self.n + 8) * (self.n + 8)).reshape(self.n + 8, self.n + 8)
@@ -44,19 +41,13 @@ class Board:
         return sorted(potential_move_list)
 
     def get_current_state(self):
-        player = self.get_current_player()
-        opponent = 2 if player == 1 else 1
-        square_state = np.zeros((4, self.n, self.n))
-        for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
-            if value == player:
-                square_state[0][self.n - x - 1][y] = 1.0
-            elif value == opponent:
-                square_state[1][self.n - x - 1][y] = 1.0
-        if self.get_move_number() > 0:
-            x, y = self.move_list[self.get_move_number() - 1]
-            square_state[2][self.n - x - 1][y] = 1.0
-        if player == 1:
-            square_state[3][:, :] = 1.0
+        pattern_list = evaluate.get_state(self.chess, self.get_move_number())
+        length = int(len(pattern_list) / 2)
+        square_state = np.zeros((3, length, length))
+        for i, v in enumerate(pattern_list):
+            square_state[0][i if i < 10 else i - 10] = [(v >> k) & 1 for k in range(0, length)][::-1]
+        if self.get_current_player() == 1:
+            square_state[2][:, :] = 1.0
         return square_state[:, ::-1, :]
 
     def get_move_number(self):

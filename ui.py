@@ -2,13 +2,12 @@ import copy
 import pickle
 import threading
 
-import evaluate
 import numpy as np
 import wx
 
 from game import Board
 from mcts_alphaZero import MCTSPlayer
-from policy_value_net_numpy import PolicyValueNetNumpy
+from policy_value_net import PolicyValueNet
 
 WIN_WIDTH = 1024
 WIN_HEIGHT = 720
@@ -46,13 +45,9 @@ class GomokuFrame(wx.Frame):
     column_name_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P']
 
     def __init__(self, n: int):
-        if 8 <= n <= STANDARD_LENGTH:
-            self.n = n
-        else:
-            raise Exception('Illegal Parameter N')
-
-        self.thread = threading.Thread()
+        self.n = n
         self.board = Board(n)
+        self.thread = threading.Thread()
         self.row_name_list = self.row_name_list[STANDARD_LENGTH - n: STANDARD_LENGTH]
         self.column_name_list = self.column_name_list[0:n]
         self.grid_length = BLOCK_LENGTH * (n - 1)
@@ -108,10 +103,9 @@ class GomokuFrame(wx.Frame):
         self.forward_button.Disable()
         self.replay_button.Disable()
         try:
-            model_file = 'best_policy.model.1000'
-            policy_param = pickle.load(open(model_file, 'rb'), encoding='bytes')
-            best_policy = PolicyValueNetNumpy(self.n, policy_param)
-            self.mcts_player = MCTSPlayer(best_policy.policy_value_func, c_puct=5, n_play_out=1000)
+            policy_param = pickle.load(open('400_policy.model', 'rb'), encoding='bytes')
+            self.mcts_player = MCTSPlayer(PolicyValueNet(net_params=policy_param).policy_value_func, c_puct=5,
+                                          n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()
             self.ai_hint_button.Enable()
@@ -344,7 +338,6 @@ class GomokuFrame(wx.Frame):
                                 self.black_button.Disable()
                                 self.white_button.Disable()
                             self.board.add_move(y, x)
-                            evaluate.get_state(self.board.chess, self.board.get_move_number())
                             has_end = self.draw_move(x, y)
                             if self.has_set_ai_player and not has_end:
                                 self.thread = threading.Thread(target=self.ai_next_move, args=())

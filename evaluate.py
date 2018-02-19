@@ -24,10 +24,8 @@ def get_state(chess_list, moves: int):
         "O_P_P_B_B_B": 0,
         "O_P_B_B_B_B": 0,
 
+        "O_O_O_O_O": 0,
         "O_O_O_O_B": 0,
-        "B_O_O_B_O_B": 0,
-        "O_O_B_O_O": 0,
-        "O_O_O_B_O": 0,
         "B_O_O_O_B": 0,
         "B_O_O_B_B": 0,
         "B_O_B_O_B": 0,
@@ -51,10 +49,8 @@ def get_state(chess_list, moves: int):
     ]
 
     one_dimensional_opponent_pattern_list = [
+        ("O_O_O_O_O", [o, o, o, o, o], False, 4),
         ("O_O_O_O_B", [o, o, o, o, 0], True, 4),
-        ("B_O_O_B_O_B", [0, o, o, 0, o, 0], True, 4),
-        ("O_O_B_O_O", [o, o, 0, o, o], False, 4),
-        ("O_O_O_B_O", [o, o, o, 0, o], True, 4),
         ("B_O_O_O_B", [0, o, o, o, 0], False, 3),
         ("B_O_O_B_B", [0, o, o, 0, 0], True, 3),
         ("B_O_B_O_B", [0, o, 0, o, 0], False, 3),
@@ -148,7 +144,7 @@ def get_2d_matching(pattern: [[]], x: int, y: int, anchor_x: int, anchor_y: int)
 def two_dimensional_pattern_match(pattern: [[]], need_rotate: bool, x: int, y: int, anchor_x: int, anchor_y: int):
     number = get_2d_matching(pattern, x, y, anchor_x, anchor_y)
     if need_rotate:
-        number += get_2d_matching(np.rot90(np.rot90(pattern)), x, y, len(pattern[0]) - anchor_x - 1,
+        number += get_2d_matching(np.rot90(pattern, 2), x, y, len(pattern[0]) - anchor_x - 1,
                                   len(pattern) - anchor_y - 1)
     return number
 
