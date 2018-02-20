@@ -82,6 +82,7 @@ class TrainPipeline:
         """collect self-play data for training"""
         play_data = list(self.game.start_self_play(self.mcts_player, temp=self.temp))
         self.episode_length = len(play_data)
+        play_data = self.get_equivalent_data(play_data)
         self.data_buffer.extend(play_data)
 
     def policy_update(self):
