@@ -43,12 +43,33 @@ class Board:
     def get_current_state(self):
         pattern_list = evaluate.get_state(self.chess, self.get_move_number())
         length = int(len(pattern_list) / 2)
-        square_state = np.zeros((3, length, length))
+        square_state = np.zeros((4, self.n, self.n))
+        for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
+            if value == 1 or value == 2:
+                square_state[0][self.n - x - 1][y] = 1.0
         for i, v in enumerate(pattern_list):
-            square_state[0][i if i < 10 else i - 10] = [(v >> k) & 1 for k in range(0, length)][::-1]
-        if self.get_current_player() == 1:
-            square_state[2][:, :] = 1.0
+            if i < length:
+                square_state[1][self.n - i - 1] = [(v >> k) & 1 for k in range(0, self.n)][::-1]
+            else:
+                square_state[2][self.n - i + length - 1] = [(v >> k) & 1 for k in range(0, self.n)][::-1]
+        if self.get_move_number() > 0:
+            x, y = self.move_list[self.get_move_number() - 1]
+            square_state[3][self.n - x - 1][y] = 1.0
         return square_state[:, ::-1, :]
+        # player = self.get_current_player()
+        # opponent = 2 if player == 1 else 1
+        # square_state = np.zeros((4, self.n, self.n))
+        # for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
+        #     if value == player:
+        #         square_state[1][self.n - x - 1][y] = 1.0
+        #     elif value == opponent:
+        #         square_state[2][self.n - x - 1][y] = 1.0
+        # if self.get_move_number() > 0:
+        #     x, y = self.move_list[self.get_move_number() - 1]
+        #     square_state[2][self.n - x - 1][y] = 1.0
+        # if player == 1:
+        #     square_state[3][:, :] = 1.0
+        # return square_state[:, ::-1, :]
 
     def get_move_number(self):
         return len(self.move_list)
@@ -119,4 +140,4 @@ class Game:
                     winners_z[np.array(current_players) != winner] = -1.0
                 # reset MCTS root node
                 player.reset_player()
-                return winner, zip(states, mcts_probabilities, winners_z)
+                return zip(states, mcts_probabilities, winners_z)

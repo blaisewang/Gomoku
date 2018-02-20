@@ -53,17 +53,34 @@ class TrainPipeline:
         if init_model:
             # start training from an initial policy-value net
             policy_param = pickle.load(open(init_model, 'rb'))
-            self.policy_value_net = PolicyValueNet(net_params=policy_param)
+            self.policy_value_net = PolicyValueNet(self.n, net_params=policy_param)
         else:
             # start training from a new policy-value net
-            self.policy_value_net = PolicyValueNet()
+            self.policy_value_net = PolicyValueNet(self.n)
         self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=self.c_puct,
                                       n_play_out=self.n_play_out, is_self_play=1)
 
+    def get_equivalent_data(self, play_data):
+        """
+        augment the data set by rotation and flipping
+        play_data: [(state, mcts_prob, winner_z), ..., ...]"""
+        extend_data = []
+        for state, mcts_probabilities, winner in play_data:
+            for i in [1, 2, 3, 4]:
+                # rotate counterclockwise
+                equivalent_state = np.array([np.rot90(s, 0 if 1 <= k <= 2 else i) for k, s in enumerate(state)])
+                equivalent_mcts_prob = np.rot90(np.flipud(mcts_probabilities.reshape(self.n, self.n)), i)
+                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_prob).flatten(), winner))
+                # flip horizontally
+                equivalent_state = np.array(
+                    [s if 1 <= k <= 2 else np.fliplr(s) for k, s in enumerate(equivalent_state)])
+                equivalent_mcts_prob = np.fliplr(equivalent_mcts_prob)
+                extend_data.append((equivalent_state, np.flipud(equivalent_mcts_prob).flatten(), winner))
+        return extend_data
+
     def collect_self_play_data(self):
         """collect self-play data for training"""
-        winner, play_data = self.game.start_self_play(self.mcts_player, temp=self.temp)
-        play_data = list(play_data)
+        play_data = list(self.game.start_self_play(self.mcts_player, temp=self.temp))
         self.episode_length = len(play_data)
         self.data_buffer.extend(play_data)
 
@@ -134,7 +151,7 @@ class TrainPipeline:
                     start_time = time.time()
                     win_ratio = self.policy_evaluate()
                     net_params = self.policy_value_net.get_policy_parameter()  # get model params
-                    pickle.dump(net_params, open('current_policy.model.' + str(i + 1), 'wb'), pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
                     print_log(str(time.time() - start_time))
                     if win_ratio > self.best_win_ratio:
                         print_log("New best policy defeated " + str(

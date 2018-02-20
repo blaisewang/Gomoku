@@ -104,7 +104,7 @@ class GomokuFrame(wx.Frame):
         self.replay_button.Disable()
         try:
             policy_param = pickle.load(open('400_policy.model', 'rb'), encoding='bytes')
-            self.mcts_player = MCTSPlayer(PolicyValueNet(net_params=policy_param).policy_value_func, c_puct=5,
+            self.mcts_player = MCTSPlayer(PolicyValueNet(self.n, net_params=policy_param).policy_value_func, c_puct=5,
                                           n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()

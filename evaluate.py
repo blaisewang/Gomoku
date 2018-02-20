@@ -9,7 +9,7 @@ def get_state(chess_list, moves: int):
     n = len(chess_list)
     chess = chess_list
 
-    p = 2 if moves % 2 == 0 else 1
+    p = 1 if moves % 2 == 0 else 2
     o = 2 if p == 1 else 1
 
     pattern_dictionary = {

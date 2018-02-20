@@ -12,15 +12,15 @@ from game import Board
 class PolicyValueNet:
     """policy-value network """
 
-    def __init__(self, net_params=None):
-        self.length = 10
+    def __init__(self, n: int, net_params=None):
+        self.n = n
         self.learning_rate = t.scalar('learning_rate')
         self.l2_const = 1e-4  # coefficient of l2 penalty
         """create the policy value network """
         self.state_input = t.tensor4('state')
         self.winner = t.vector('winner')
         self.mcts_probabilities = t.matrix('mcts_probabilities')
-        network = lasagne.layers.InputLayer(shape=(None, 3, self.length, self.length),
+        network = lasagne.layers.InputLayer(shape=(None, 4, self.n, self.n),
                                             input_var=self.state_input)
         # convolutional layers
         network = lasagne.layers.Conv2DLayer(network, num_filters=32, filter_size=(3, 3), pad='same')
@@ -28,7 +28,7 @@ class PolicyValueNet:
         network = lasagne.layers.Conv2DLayer(network, num_filters=128, filter_size=(3, 3), pad='same')
         # action policy layers
         policy_net = lasagne.layers.Conv2DLayer(network, num_filters=4, filter_size=(1, 1))
-        self.policy_net = lasagne.layers.DenseLayer(policy_net, num_units=self.length * self.length,
+        self.policy_net = lasagne.layers.DenseLayer(policy_net, num_units=self.n * self.n,
                                                     nonlinearity=lasagne.nonlinearities.softmax)
         # state value layers
         value_net = lasagne.layers.Conv2DLayer(network, num_filters=2, filter_size=(1, 1))
@@ -63,7 +63,7 @@ class PolicyValueNet:
         """
         legal_positions = board.get_available_moves()
         current_state = board.get_current_state()
-        act_probabilities, value = self.policy_value(current_state.reshape(-1, 3, self.length, self.length))
+        act_probabilities, value = self.policy_value(current_state.reshape(-1, 4, self.n, self.n))
         act_probabilities = zip(legal_positions, act_probabilities.flatten()[legal_positions])
         return act_probabilities, value[0][0]
 
