@@ -48,10 +48,8 @@ class Board:
             if value == 1 or value == 2:
                 square_state[0][self.n - x - 1][y] = 1.0
         for i, v in enumerate(pattern_list):
-            if i < length:
-                square_state[1][self.n - i - 1] = [(v >> k) & 1 for k in range(0, self.n)][::-1]
-            else:
-                square_state[2][self.n - i + length - 1] = [(v >> k) & 1 for k in range(0, self.n)][::-1]
+            square_state[1 if i < length else 2][self.n - i - 1 if i < length else self.n - i - 1 + length] = [((v ^ (
+                    v >> 1)) >> k) & 1 for k in range(0, self.n)][::-1]
         if self.get_move_number() > 0:
             x, y = self.move_list[self.get_move_number() - 1]
             square_state[3][self.n - x - 1][y] = 1.0

@@ -26,10 +26,18 @@ def print_log(string: str):
     file.close()
 
 
+def save_data(data: []):
+    bytes_out = pickle.dumps(data)
+    with open("loss_entropy.log", 'ab') as file:
+        file.write(bytes_out)
+    file.close()
+
+
 class TrainPipeline:
     def __init__(self, n: int, init_model=None):
         # params of the board and the game
         self.n = n
+        self.data = []
         self.board = Board(self.n)
         self.game = Game(self.board)
         # training params 
@@ -89,6 +97,8 @@ class TrainPipeline:
         """update the policy-value net"""
         kl = 0
         new_v = 0
+        loss = 0
+        entropy = 0
 
         mini_batch = random.sample(self.data_buffer, self.batch_size)
         state_batch = [data[0] for data in mini_batch]
@@ -96,8 +106,8 @@ class TrainPipeline:
         winner_batch = [data[2] for data in mini_batch]
         old_probabilities, old_v = self.policy_value_net.policy_value(state_batch)
         for i in range(self.epochs):
-            self.policy_value_net.train_step(state_batch, mcts_probabilities_batch, winner_batch,
-                                             self.learn_rate * self.lr_multiplier)
+            loss, entropy = self.policy_value_net.train_step(state_batch, mcts_probabilities_batch, winner_batch,
+                                                             self.learn_rate * self.lr_multiplier)
             new_probabilities, new_v = self.policy_value_net.policy_value(state_batch)
             kl = np.mean(
                 np.sum(old_probabilities * (np.log(old_probabilities + 1e-10) - np.log(new_probabilities + 1e-10)),
@@ -112,8 +122,9 @@ class TrainPipeline:
 
         explained_var_old = 1 - np.var(np.array(winner_batch) - old_v.flatten()) / np.var(np.array(winner_batch))
         explained_var_new = 1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch))
-        print_log("kl:{:.5f},lr_multiplier:{:.3f},explained_var_old:{:.3f},explained_var_new:{:.3f}".
-                  format(kl, self.lr_multiplier, explained_var_old, explained_var_new))
+        print_log("kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f}".
+                  format(kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new))
+        return loss, entropy
 
     def policy_evaluate(self, n_games=10):
         """
@@ -145,9 +156,12 @@ class TrainPipeline:
                 print_log(
                     "batch i:{}, episode_len:{}, in:{}".format(i + 1, self.episode_length, time.time() - start_time))
                 if len(self.data_buffer) > self.batch_size:
-                    self.policy_update()
-                    # check the performance of the current model，and save the model params
+                    loss, entropy = self.policy_update()
+                    self.data.append((i + 1, loss, entropy))
+                # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
+                    save_data(self.data)
+                    self.data.clear()
                     print_log("current self-play batch: {}".format(i + 1))
                     start_time = time.time()
                     win_ratio = self.policy_evaluate()
@@ -170,5 +184,5 @@ if __name__ == '__main__':
     length = sys.argv[1]
     if length.isdigit():
         sys.setrecursionlimit(256 * 256)
-        training_pipeline = TrainPipeline(int(length))
+        training_pipeline = TrainPipeline(int(length), init_model="current_policy.model")
         training_pipeline.run()
