@@ -28,7 +28,7 @@ def print_log(string: str):
 
 def save_data(data: []):
     bytes_out = pickle.dumps(data)
-    with open("loss_entropy.log", 'ab') as file:
+    with open("data.log", 'ab') as file:
         file.write(bytes_out)
     file.close()
 
@@ -40,7 +40,7 @@ class TrainPipeline:
         self.data = []
         self.board = Board(self.n)
         self.game = Game(self.board)
-        # training params 
+        # training params
         self.learn_rate = 5e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
@@ -57,6 +57,7 @@ class TrainPipeline:
         self.episode_length = 0
         self.pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         # number of simulations used for the pure mcts, which is used as the opponent to evaluate the trained policy
+        self.last_batch_number = 0
         self.pure_mcts_play_out_number = 1000
         if init_model:
             # start training from an initial policy-value net
@@ -154,15 +155,16 @@ class TrainPipeline:
                 start_time = time.time()
                 self.collect_self_play_data()
                 print_log(
-                    "batch i:{}, episode_len:{}, in:{}".format(i + 1, self.episode_length, time.time() - start_time))
+                    "batch i:{}, episode_len:{}, in:{}".format(i + 1 + self.last_batch_number, self.episode_length,
+                                                               time.time() - start_time))
                 if len(self.data_buffer) > self.batch_size:
                     loss, entropy = self.policy_update()
-                    self.data.append((i + 1, loss, entropy))
+                    self.data.append((i + 1 + self.last_batch_number, loss, entropy))
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     save_data(self.data)
                     self.data.clear()
-                    print_log("current self-play batch: {}".format(i + 1))
+                    print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))
                     start_time = time.time()
                     win_ratio = self.policy_evaluate()
                     net_params = self.policy_value_net.get_policy_parameter()  # get model params
@@ -184,5 +186,5 @@ if __name__ == '__main__':
     length = sys.argv[1]
     if length.isdigit():
         sys.setrecursionlimit(256 * 256)
-        training_pipeline = TrainPipeline(int(length), init_model="current_policy.model")
+        training_pipeline = TrainPipeline(int(length))
         training_pipeline.run()
