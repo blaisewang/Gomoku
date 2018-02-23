@@ -26,10 +26,9 @@ def print_log(string: str):
     file.close()
 
 
-def save_data(data: []):
-    bytes_out = pickle.dumps(data)
-    with open("data.log", 'ab') as file:
-        file.write(bytes_out)
+def save_data(string: str):
+    with open("data.log", 'a') as file:
+        file.write(string + "\n")
     file.close()
 
 
@@ -37,7 +36,6 @@ class TrainPipeline:
     def __init__(self, n: int, init_model=None):
         # params of the board and the game
         self.n = n
-        self.data = []
         self.board = Board(self.n)
         self.game = Game(self.board)
         # training params
@@ -159,11 +157,9 @@ class TrainPipeline:
                                                                time.time() - start_time))
                 if len(self.data_buffer) > self.batch_size:
                     loss, entropy = self.policy_update()
-                    self.data.append((i + 1 + self.last_batch_number, loss, entropy))
+                    save_data(str((i + 1 + self.last_batch_number, loss, entropy)))
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
-                    save_data(self.data)
-                    self.data.clear()
                     print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))
                     start_time = time.time()
                     win_ratio = self.policy_evaluate()
