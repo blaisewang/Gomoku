@@ -31,7 +31,7 @@ class GomokuFrame(wx.Frame):
     is_banner_displayed = False
     is_analysis_displayed = False
 
-    piece_radius = int(BLOCK_LENGTH / 2 - 3)
+    piece_radius = (BLOCK_LENGTH >> 1) - 3
     inner_circle_radius = piece_radius - 4
     half_button_width = (BUTTON_WIDTH - BUTTON_WIDTH_MARGIN) / 2
 
@@ -250,10 +250,12 @@ class GomokuFrame(wx.Frame):
         dc.DrawTextList(self.row_name_list, self.row_list)
         dc.DrawTextList(self.column_name_list, self.column_list)
         dc.SetBrush(wx.Brush(wx.BLACK))
+        if self.n % 2 == 1:
+            dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * (self.n >> 1),
+                          self.grid_position_y + BLOCK_LENGTH * (self.n >> 1), 4)
         if self.n == STANDARD_LENGTH:
             dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 3, self.grid_position_y + BLOCK_LENGTH * 3, 4)
             dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 3, self.grid_position_y + BLOCK_LENGTH * 11, 4)
-            dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 7, self.grid_position_y + BLOCK_LENGTH * 7, 4)
             dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 11, self.grid_position_y + BLOCK_LENGTH * 3, 4)
             dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 11, self.grid_position_y + BLOCK_LENGTH * 11, 4)
 

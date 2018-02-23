@@ -42,7 +42,7 @@ class Board:
 
     def get_current_state(self):
         pattern_list = evaluate.get_state(self.chess, self.get_move_number())
-        length = int(len(pattern_list) / 2)
+        length = len(pattern_list) >> 1
         square_state = np.zeros((4, self.n, self.n))
         for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
             if value == 1 or value == 2:
