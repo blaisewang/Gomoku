@@ -44,12 +44,12 @@ class Board:
         pattern_list = evaluate.get_state(self.chess, self.get_move_number())
         length = len(pattern_list) >> 1
         square_state = np.zeros((4, self.n, self.n))
+        for i, v in enumerate(pattern_list):
+            square_state[0 if i < length else 1][self.n - i - 1 if i < length else self.n - i - 1 + length] = [((v ^ (
+                    v >> 1)) >> k) & 1 for k in range(0, self.n)][::-1]
         for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
             if value == 1 or value == 2:
-                square_state[0][self.n - x - 1][y] = 1.0
-        for i, v in enumerate(pattern_list):
-            square_state[1 if i < length else 2][self.n - i - 1 if i < length else self.n - i - 1 + length] = [((v ^ (
-                    v >> 1)) >> k) & 1 for k in range(0, self.n)][::-1]
+                square_state[2][self.n - x - 1][y] = 1.0
         if self.get_move_number() > 0:
             x, y = self.move_list[self.get_move_number() - 1]
             square_state[3][self.n - x - 1][y] = 1.0
