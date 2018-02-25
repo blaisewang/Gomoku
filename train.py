@@ -75,12 +75,11 @@ class TrainPipeline:
         for state, mcts_probabilities, winner in play_data:
             for i in [1, 2, 3, 4]:
                 # rotate counterclockwise
-                equivalent_state = np.array([np.rot90(s, 0 if 1 <= k <= 2 else i) for k, s in enumerate(state)])
+                equivalent_state = np.array([np.rot90(s, 0 if k <= 1 else i) for k, s in enumerate(state)])
                 equivalent_mcts_prob = np.rot90(np.flipud(mcts_probabilities.reshape(self.n, self.n)), i)
                 extend_data.append((equivalent_state, np.flipud(equivalent_mcts_prob).flatten(), winner))
                 # flip horizontally
-                equivalent_state = np.array(
-                    [s if 1 <= k <= 2 else np.fliplr(s) for k, s in enumerate(equivalent_state)])
+                equivalent_state = np.array([s if k <= 1 else np.fliplr(s) for k, s in enumerate(equivalent_state)])
                 equivalent_mcts_prob = np.fliplr(equivalent_mcts_prob)
                 extend_data.append((equivalent_state, np.flipud(equivalent_mcts_prob).flatten(), winner))
         return extend_data
