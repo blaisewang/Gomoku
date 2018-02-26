@@ -20,8 +20,7 @@ class PolicyValueNet:
         self.state_input = t.tensor4('state')
         self.winner = t.vector('winner')
         self.mcts_probabilities = t.matrix('mcts_probabilities')
-        network = lasagne.layers.InputLayer(shape=(None, 4, self.n, self.n),
-                                            input_var=self.state_input)
+        network = lasagne.layers.InputLayer(shape=(None, 4, self.n, self.n), input_var=self.state_input)
         # convolutional layers
         network = lasagne.layers.Conv2DLayer(network, num_filters=32, filter_size=(3, 3), pad='same')
         network = lasagne.layers.Conv2DLayer(network, num_filters=64, filter_size=(3, 3), pad='same')

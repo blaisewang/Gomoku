@@ -65,7 +65,7 @@ class GomokuFrame(wx.Frame):
             self.column_list.append(
                 (i + self.grid_position_x, self.grid_position_y + self.grid_length + COLUMN_LIST_MARGIN))
 
-        wx.Frame.__init__(self, None, title="Gomoku",
+        wx.Frame.__init__(self, None, title="Gomoku Zero",
                           pos=((wx.DisplaySize()[0] - WIN_WIDTH) / 2, (wx.DisplaySize()[1] - WIN_HEIGHT) / 2.5),
                           size=(WIN_WIDTH, WIN_HEIGHT), style=wx.CLOSE_BOX)
         button_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, False)
@@ -340,6 +340,7 @@ class GomokuFrame(wx.Frame):
                                 self.black_button.Disable()
                                 self.white_button.Disable()
                             self.board.add_move(y, x)
+                            print(self.board.get_current_state())
                             has_end = self.draw_move(x, y)
                             if self.has_set_ai_player and not has_end:
                                 self.thread = threading.Thread(target=self.ai_next_move, args=())

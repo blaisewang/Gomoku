@@ -52,7 +52,7 @@ class TreeNode:
         Returns:
         A tuple of (action, next_node)
         """
-        return max(iter(self.children.items()), key=lambda act_node: act_node[1].get_value(c_puct))
+        return max(self.children.items(), key=lambda act_node: act_node[1].get_value(c_puct))
 
     def update(self, leaf_value):
         """Update node values from leaf evaluation.
@@ -160,7 +160,7 @@ class MCTS:
         the selected action
         """
         [self._play_out(copy.deepcopy(state)) for _ in range(self._n_play_out)]
-        return max(iter(self._root.children.items()), key=lambda act_node: act_node[1].n_visits)[0]
+        return max(self._root.children.items(), key=lambda act_node: act_node[1].n_visits)[0]
 
     def update_with_move(self, last_move: int):
         """Step forward in the tree, keeping everything we already know about the subtree.

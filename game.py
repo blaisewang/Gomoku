@@ -59,9 +59,9 @@ class Board:
         # square_state = np.zeros((4, self.n, self.n))
         # for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
         #     if value == player:
-        #         square_state[1][self.n - x - 1][y] = 1.0
+        #         square_state[0][self.n - x - 1][y] = 1.0
         #     elif value == opponent:
-        #         square_state[2][self.n - x - 1][y] = 1.0
+        #         square_state[1][self.n - x - 1][y] = 1.0
         # if self.get_move_number() > 0:
         #     x, y = self.move_list[self.get_move_number() - 1]
         #     square_state[2][self.n - x - 1][y] = 1.0
