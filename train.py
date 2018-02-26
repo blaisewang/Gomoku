@@ -155,8 +155,10 @@ class TrainPipeline:
                     "batch i:{}, episode_len:{}, in:{}".format(i + 1 + self.last_batch_number, self.episode_length,
                                                                time.time() - start_time))
                 if len(self.data_buffer) > self.batch_size:
+                    start_time = time.time()
                     loss, entropy = self.policy_update()
                     save_data(str((i + 1 + self.last_batch_number, loss, entropy)))
+                    print_log(str(time.time() - start_time))
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))

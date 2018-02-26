@@ -53,7 +53,6 @@ class Board:
         if self.get_move_number() > 0:
             x, y = self.move_list[self.get_move_number() - 1]
             square_state[3][self.n - x - 1][y] = 1.0
-        return square_state[:, ::-1, :]
         # player = self.get_current_player()
         # opponent = 2 if player == 1 else 1
         # square_state = np.zeros((4, self.n, self.n))
@@ -65,9 +64,9 @@ class Board:
         # if self.get_move_number() > 0:
         #     x, y = self.move_list[self.get_move_number() - 1]
         #     square_state[2][self.n - x - 1][y] = 1.0
-        # if player == 1:
+        # if self.get_current_player() == 1:
         #     square_state[3][:, :] = 1.0
-        # return square_state[:, ::-1, :]
+        return square_state[:, ::-1, :]
 
     def get_move_number(self):
         return len(self.move_list)

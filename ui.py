@@ -103,7 +103,7 @@ class GomokuFrame(wx.Frame):
         self.forward_button.Disable()
         self.replay_button.Disable()
         try:
-            policy_param = pickle.load(open('400_policy.model', 'rb'), encoding='bytes')
+            policy_param = pickle.load(open('best_policy.model', 'rb'), encoding='bytes')
             self.mcts_player = MCTSPlayer(PolicyValueNet(self.n, net_params=policy_param).policy_value_func, c_puct=5,
                                           n_play_out=400)
             self.black_button.Enable()
@@ -340,7 +340,6 @@ class GomokuFrame(wx.Frame):
                                 self.black_button.Disable()
                                 self.white_button.Disable()
                             self.board.add_move(y, x)
-                            print(self.board.get_current_state())
                             has_end = self.draw_move(x, y)
                             if self.has_set_ai_player and not has_end:
                                 self.thread = threading.Thread(target=self.ai_next_move, args=())
