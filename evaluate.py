@@ -1,136 +1,111 @@
 import numpy as np
 
-n = 0
-chess = np.zeros(0)
 
+def get_state(chess) -> ():
+    n = len(chess)
 
-def get_state(chess_list, moves: int):
-    global n, chess
-    n = len(chess_list)
-    chess = chess_list
-
-    p = 1 if moves % 2 == 0 else 2
-    o = 2 if p == 1 else 1
-
-    pattern_dictionary = {
-        "B_P_P_P_P_B": 0,
-        "B_P_P_P_B": 0,
-        "B_P_P_B_B": 0,
-        "B_P_B_P_B": 0,
-        "B_B_P_B_B": 0,
-        "H_P_P_P_P_B": 0,
-        "H_P_P_P_B_B": 0,
-        "H_P_P_B_B_B": 0,
-        "H_P_B_P_B_B": 0,
-        "H_B_P_B_B_B": 0,
-        "H_P_B_B_B_B": 0,
-
-
-        "O_O_O_O_O": 0,
-        "O_O_O_O_B": 0,
-        "B_O_O_O_B": 0,
-        "B_O_O_B_B": 0,
-        "B_O_B_O_B": 0,
-        "B_B_O_B_B": 0,
-        "H_O_O_O_B_B": 0,
-        "H_O_O_B_B_B": 0,
-        "H_O_B_O_B_B": 0,
-        "H_B_O_B_B_B": 0,
-        "H_O_B_B_B_B": 0
+    black_pattern_dictionary = {
+        (1, 1, 1, 1, 1): 0,
+        (1, 1, 1, 1, 0): 0,
+        (1, 1, 1, 0, 1): 0,
+        (1, 1, 0, 1, 1): 0,
+        (0, 1, 1, 1, 0): 0,
+        (1, 1, 1, 0, 0): 0,
+        (1, 1, 0, 1, 0): 0,
+        (1, 1, 0, 0, 1): 0,
+        (0, 1, 1, 0, 1): 0,
+        (1, 0, 1, 0, 1): 0,
+        (0, 1, 1, 0, 0): 0,
+        (0, 1, 0, 1, 0): 0,
+        (1, 1, 0, 0, 0): 0,
+        (1, 0, 1, 0, 0): 0,
+        (1, 0, 0, 1, 0): 0,
+        (1, 0, 0, 0, 1): 0,
+        (0, 0, 1, 0, 0): 0,
+        (0, 1, 0, 0, 0): 0,
+        (1, 0, 0, 0, 0): 0
     }
 
-    player_pattern_list = [
-        ("B_P_P_P_P_B", [0, p, p, p, p, 0], False, 4),
-        ("B_P_P_P_B", [0, p, p, p, 0], False, 3),
-        ("B_P_P_B_B", [0, p, p, 0, 0], True, 3),
-        ("B_P_B_P_B", [0, p, 0, p, 0], False, 3),
-        ("B_B_P_B_B", [0, 0, p, 0, 0], False, 2),
-        ("H_P_P_P_P_B", [o, p, p, p, p, 0], True, 4),
-        ("H_P_P_P_P_B", [-2, p, p, p, p, 0], True, 4),
-        ("H_P_P_P_B_B", [o, p, p, p, 0, 0], True, 4),
-        ("H_P_P_P_B_B", [-2, p, p, p, 0, 0], True, 4),
-        ("H_P_P_B_B_B", [o, p, p, 0, 0, 0], True, 4),
-        ("H_P_P_B_B_B", [-2, p, p, 0, 0, 0], True, 4),
-        ("H_P_B_P_B_B", [o, p, 0, p, 0, 0], True, 4),
-        ("H_P_B_P_B_B", [-2, p, 0, p, 0, 0], True, 4),
-        ("H_B_P_B_B_B", [p, 0, p, 0, 0, 0], True, 3),
-        ("H_B_P_B_B_B", [-2, 0, p, 0, 0, 0], True, 3),
-        ("H_P_B_B_B_B", [o, p, 0, 0, 0, 0], True, 4),
-        ("H_P_B_B_B_B", [-2, p, 0, 0, 0, 0], True, 4)
-    ]
+    white_pattern_dictionary = {
+        (2, 2, 2, 2, 2): 0,
+        (2, 2, 2, 2, 0): 0,
+        (2, 2, 2, 0, 2): 0,
+        (2, 2, 0, 2, 2): 0,
+        (0, 2, 2, 2, 0): 0,
+        (2, 2, 2, 0, 0): 0,
+        (2, 2, 0, 2, 0): 0,
+        (2, 2, 0, 0, 2): 0,
+        (0, 2, 2, 0, 2): 0,
+        (2, 0, 2, 0, 2): 0,
+        (0, 2, 2, 0, 0): 0,
+        (0, 2, 0, 2, 0): 0,
+        (2, 2, 0, 0, 0): 0,
+        (2, 0, 2, 0, 0): 0,
+        (2, 0, 0, 2, 0): 0,
+        (2, 0, 0, 0, 2): 0,
+        (0, 0, 2, 0, 0): 0,
+        (0, 2, 0, 0, 0): 0,
+        (2, 0, 0, 0, 0): 0
+    }
 
-    opponent_pattern_list = [
-        ("O_O_O_O_O", [o, o, o, o, o], False, 4),
-        ("O_O_O_O_B", [o, o, o, o, 0], True, 4),
-        ("B_O_O_O_B", [0, o, o, o, 0], False, 3),
-        ("B_O_O_B_B", [0, o, o, 0, 0], True, 3),
-        ("B_O_B_O_B", [0, o, 0, o, 0], False, 3),
-        ("B_B_O_B_B", [0, 0, o, 0, 0], False, 2),
-        ("H_O_O_O_B_B", [p, o, o, o, 0, 0], True, 4),
-        ("H_O_O_O_B_B", [-2, o, o, o, 0, 0], True, 4),
-        ("H_O_O_B_B_B", [p, o, o, 0, 0, 0], True, 4),
-        ("H_O_O_B_B_B", [-2, o, o, 0, 0, 0], True, 4),
-        ("H_O_B_O_B_B", [p, o, 0, o, 0, 0], True, 4),
-        ("H_O_B_O_B_B", [-2, o, 0, o, 0, 0], True, 4),
-        ("H_B_O_B_B_B", [p, 0, o, 0, 0, 0], True, 3),
-        ("H_B_O_B_B_B", [-2, 0, o, 0, 0, 0], True, 3),
-        ("H_O_B_B_B_B", [p, o, 0, 0, 0, 0], True, 4),
-        ("H_O_B_B_B_B", [-2, o, 0, 0, 0, 0], True, 4)
-    ]
-
-    for (x, y), value in np.ndenumerate(chess[4:n + 4, 4:n + 4]):
-        if value == p:
-            for key, pattern, need_reverse, left_offset in player_pattern_list:
-                pattern_dictionary[key] += get_pattern_match(pattern, need_reverse, x + 4, y + 4, left_offset)
-        elif value == o:
-            for key, pattern, need_reverse, left_offset in opponent_pattern_list:
-                pattern_dictionary[key] += get_pattern_match(pattern, need_reverse, x + 4, y + 4, left_offset)
-    return list(pattern_dictionary.values())
-
-
-def has_winner(x: int, y: int, player: int, chess_list):
-    global n, chess
-    n = len(chess_list)
-    chess = chess_list
-    return get_pattern_match([player, player, player, player, player], False, x, y, 4) > 0
+    for (x, y), v in np.ndenumerate(chess[4:n + 4, 4:n + 4]):
+        x += 4
+        y += 4
+        diff = y - x
+        rot = x - (n - 1) + y
+        bias = 0 if diff <= 0 else abs(diff)
+        rot_bias = 0 if rot <= 0 else abs(rot)
+        if v == 1 or v == 2:
+            for array in [chess[x, y - 4: y + 5], chess[x - 4: x + 5, y],
+                          np.diagonal(chess, offset=diff)[y - bias - 4:y - bias + 5],
+                          np.diagonal(np.rot90(chess), offset=rot)[x - rot_bias - 4:x - rot_bias + 5]]:
+                for i in range(5):
+                    similarity = 0
+                    for j in range(5):
+                        if array[i + j] != v and array[i + j] != 0:
+                            break
+                        similarity += 1
+                    if similarity == 5:
+                        key = tuple(array[i:i + 5])
+                        if v == 1:
+                            if key in black_pattern_dictionary:
+                                black_pattern_dictionary[key] += 1
+                            else:
+                                black_pattern_dictionary[key[::-1]] += 1
+                        else:
+                            if key in white_pattern_dictionary:
+                                white_pattern_dictionary[key] += 1
+                            else:
+                                white_pattern_dictionary[key[::-1]] += 1
+    return list(black_pattern_dictionary.values()), list(white_pattern_dictionary.values())
 
 
-def get_matching(pattern: [], x: int, y: int, l_ofs: int, r_ofs: int):
+def has_winner(chess, x: int, y: int) -> bool:
+    player = chess[x, y]
+    return get_matching(chess, [player, player, player, player, player], x, y) > 0
+
+
+def get_matching(chess, pattern: [], x: int, y: int) -> int:
     diff = y - x
-    rot = x - (n - 1) + y
+    rot = x - (len(chess) - 1) + y
     bias = 0 if diff <= 0 else abs(diff)
     rot_bias = 0 if rot <= 0 else abs(rot)
 
-    return (int(is_pattern_match([pattern], [chess[x, y - l_ofs: y + r_ofs]])) +
-            int(is_pattern_match([pattern], [chess[x - l_ofs: x + r_ofs, y]])) +
-            int(is_pattern_match([pattern], [np.diagonal(chess, offset=diff)[y - bias - l_ofs:y - bias + r_ofs]])) +
-            int(is_pattern_match([pattern], [
-                np.diagonal(np.rot90(chess), offset=rot)[x - rot_bias - l_ofs:x - rot_bias + r_ofs]])))
+    return (int(is_pattern_match(pattern, chess[x, y - 4: y + 5])) +
+            int(is_pattern_match(pattern, chess[x - 4: x + 5, y])) +
+            int(is_pattern_match(pattern, np.diagonal(chess, offset=diff)[y - bias - 4:y - bias + 5])) +
+            int(is_pattern_match(pattern, np.diagonal(np.rot90(chess), offset=rot)[x - rot_bias - 4:x - rot_bias + 5])))
 
 
-def get_pattern_match(pattern: [], need_reverse: bool, x: int, y: int, l_ofs: int) -> int:
-    number = get_matching(pattern, x, y, l_ofs, l_ofs + 1)
-    if need_reverse:
-        number += get_matching(list(reversed(pattern)), x, y, l_ofs, l_ofs + 1)
-    return number
-
-
-def is_pattern_match(pattern: [[]], array: [[]]):
-    pattern_rows = len(pattern)
-    pattern_columns = len(pattern[0])
-    array_rows = len(array)
-    array_columns = len(array[0])
-
+def is_pattern_match(p: [], l: []) -> bool:
     flag = False
-    for i in range(array_rows - pattern_rows + 1):
-        for j in range(array_columns - pattern_columns + 1):
-            similarity = 0
-            for k in range(pattern_rows):
-                for l in range(pattern_columns):
-                    if pattern[k][l] != array[i + k][j + l] and pattern[k][l] != -1:
-                        break
-                    similarity += 1
-            if similarity == pattern_rows * pattern_columns:
-                flag = True
+    for i in range(5):
+        similarity = 0
+        for j in range(5):
+            if p[j] != l[i + j]:
                 break
+            similarity += 1
+        if similarity == 5:
+            flag = True
+            break
     return flag

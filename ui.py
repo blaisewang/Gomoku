@@ -213,10 +213,11 @@ class GomokuFrame(wx.Frame):
         self.draw_move(y, x)
 
     def disable_buttons(self):
-        end, _ = self.board.has_ended()
-        if end:
-            self.ai_hint_button.Disable()
-            self.analysis_button.Disable()
+        if self.moves > 8:
+            end, _ = self.board.has_ended()
+            if end:
+                self.ai_hint_button.Disable()
+                self.analysis_button.Disable()
 
     def initialize_user_interface(self):
         self.board = Board(self.n)

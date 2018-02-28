@@ -4,6 +4,12 @@ import evaluate
 from mcts_alphaZero import MCTSPlayer
 
 
+def to_binary_list(pattern: [], n: int, i: int) -> []:
+    length = len(pattern) >> 1
+    c = [((pattern[i] ^ (pattern[i] >> 1)) >> k) & 1 for k in range(0, n >> 1)][::-1]
+    return c + [((pattern[i + length] ^ (pattern[i + length] >> 1)) >> k) & 1 for k in range(0, n - (n >> 1))][::-1]
+
+
 class Board:
     def __init__(self, n: int):
         self.n = n
@@ -33,7 +39,7 @@ class Board:
     def location_to_move(self, x: int, y: int) -> int:
         return (self.n - x - 1) * self.n + y
 
-    def get_available_moves(self):
+    def get_available_moves(self) -> []:
         potential_move_list = []
         for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
             if not value:
@@ -41,19 +47,23 @@ class Board:
         return sorted(potential_move_list)
 
     def get_current_state(self):
-        pattern_list = evaluate.get_state(self.chess, self.get_move_number())
-        length = len(pattern_list) >> 1
+        player = self.get_current_player()
+        black_list, white_list = evaluate.get_state(self.chess)
+        length = len(black_list) >> 1
         square_state = np.zeros((4, self.n, self.n))
-        for i, v in enumerate(pattern_list):
-            square_state[0 if i < length else 1][self.n - i - 1 if i < length else self.n - i - 1 + length] = [((v ^ (
-                    v >> 1)) >> k) & 1 for k in range(0, self.n)][::-1]
+        if black_list[0] > 0:
+            square_state[0 if player == 1 else 1][self.n - 1] = np.repeat(1, self.n)
+        elif white_list[0] > 0:
+            square_state[1 if player == 1 else 0][self.n - 1] = np.repeat(1, self.n)
+        for i in range(1, length + 1):
+            square_state[0 if player == 1 else 1][self.n - i - 1] = to_binary_list(black_list, self.n, i)
+            square_state[1 if player == 1 else 0][self.n - i - 1] = to_binary_list(white_list, self.n, i)
         for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
             if value == 1 or value == 2:
                 square_state[2][self.n - x - 1][y] = 1.0
         if self.get_move_number() > 0:
             x, y = self.move_list[self.get_move_number() - 1]
             square_state[3][self.n - x - 1][y] = 1.0
-        # player = self.get_current_player()
         # opponent = 2 if player == 1 else 1
         # square_state = np.zeros((4, self.n, self.n))
         # for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
@@ -68,16 +78,15 @@ class Board:
         #     square_state[3][:, :] = 1.0
         return square_state[:, ::-1, :]
 
-    def get_move_number(self):
+    def get_move_number(self) -> int:
         return len(self.move_list)
 
-    def get_current_player(self):
+    def get_current_player(self) -> int:
         return 1 if self.get_move_number() % 2 == 0 else 2
 
     def has_winner(self, x: int, y: int):
-        player = 2 if self.get_move_number() % 2 == 0 else 1
-        if evaluate.has_winner(x + 4, y + 4, player, self.chess):
-            self.winner = player
+        if evaluate.has_winner(self.chess, x + 4, y + 4):
+            self.winner = 2 if self.get_current_player() == 1 else 1
 
     def has_ended(self):
         if self.get_move_number() == 0:
@@ -97,7 +106,7 @@ class Game:
     def __init__(self, board: 'Board'):
         self.board = board
 
-    def start_play(self, args):
+    def start_play(self, args) -> int:
         player1, player2, index = args
         if index % 2:
             player1, player2 = player2, player1

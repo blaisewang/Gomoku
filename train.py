@@ -147,7 +147,6 @@ class TrainPipeline:
         try:
             for i in range(self.game_batch_number):
                 if os.path.exists("done"):
-                    print("Finish training")
                     break
                 start_time = time.time()
                 self.collect_self_play_data()
@@ -174,7 +173,7 @@ class TrainPipeline:
                             print_log("New best policy defeated " + str(
                                 self.pure_mcts_play_out_number) + " play out MCTS player ")
         except KeyboardInterrupt:
-            print("\n\rquit")
+            pass
 
 
 if __name__ == '__main__':
