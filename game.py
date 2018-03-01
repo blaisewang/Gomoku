@@ -4,7 +4,7 @@ import evaluate
 from mcts_alphaZero import MCTSPlayer
 
 
-def to_binary_list(pattern: [], n: int, i: int) -> []:
+def to_list(pattern: [], n: int, i: int) -> []:
     length = len(pattern) >> 1
     c = [((pattern[i] ^ (pattern[i] >> 1)) >> k) & 1 for k in range(0, n >> 1)][::-1]
     return c + [((pattern[i + length] ^ (pattern[i + length] >> 1)) >> k) & 1 for k in range(0, n - (n >> 1))][::-1]
@@ -51,16 +51,17 @@ class Board:
         black_list, white_list = evaluate.get_state(self.chess)
         length = len(black_list) >> 1
         square_state = np.zeros((4, self.n, self.n))
+        n = (self.n - 3) >> 1
         if black_list[0] > 0:
-            square_state[0 if player == 1 else 1][self.n - 1] = np.repeat(1, self.n)
+            square_state[1 if player == 1 else 2][self.n - 1] = np.repeat(1, self.n)
         elif white_list[0] > 0:
-            square_state[1 if player == 1 else 0][self.n - 1] = np.repeat(1, self.n)
+            square_state[2 if player == 1 else 1][self.n - 1] = np.repeat(1, self.n)
         for i in range(1, length + 1):
-            square_state[0 if player == 1 else 1][self.n - i - 1] = to_binary_list(black_list, self.n, i)
-            square_state[1 if player == 1 else 0][self.n - i - 1] = to_binary_list(white_list, self.n, i)
+            square_state[1 if player == 1 else 2][self.n - i - 1] = to_list(black_list, n, i)
+            square_state[2 if player == 1 else 1][self.n - i - 1] = to_list(white_list, n, i)
         for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
             if value == 1 or value == 2:
-                square_state[2][self.n - x - 1][y] = 1.0
+                square_state[0][self.n - x - 1][y] = 1.0
         if self.get_move_number() > 0:
             x, y = self.move_list[self.get_move_number() - 1]
             square_state[3][self.n - x - 1][y] = 1.0

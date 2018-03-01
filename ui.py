@@ -264,8 +264,8 @@ class GomokuFrame(wx.Frame):
         dc = wx.ClientDC(self)
         for move, p in possible_move:
             y, x = self.board.move_to_location(move)
-            dc.SetBrush(wx.Brush(wx.Colour(56, 162, 84, alpha=14 if int(p * 230) < 14 else int(p * 230))))
-            dc.SetPen(wx.Pen(wx.Colour(56, 162, 84, alpha=230)))
+            dc.SetBrush(wx.Brush(wx.Colour(28, 164, 252, alpha=14 if int(p * 230) < 14 else int(p * 230))))
+            dc.SetPen(wx.Pen(wx.Colour(28, 164, 252, alpha=230)))
             dc.DrawCircle(self.grid_position_x + x * BLOCK_LENGTH, self.grid_position_y + y * BLOCK_LENGTH,
                           self.piece_radius)
 

@@ -22,16 +22,16 @@ class PolicyValueNet:
         self.mcts_probabilities = t.matrix('mcts_probabilities')
         network = lasagne.layers.InputLayer(shape=(None, 4, self.n, self.n), input_var=self.state_input)
         # convolutional layers
-        network = lasagne.layers.Conv2DLayer(network, num_filters=32, filter_size=(3, 3), pad='same')
         network = lasagne.layers.Conv2DLayer(network, num_filters=64, filter_size=(3, 3), pad='same')
         network = lasagne.layers.Conv2DLayer(network, num_filters=128, filter_size=(3, 3), pad='same')
+        network = lasagne.layers.Conv2DLayer(network, num_filters=256, filter_size=(3, 3), pad='same')
         # action policy layers
-        policy_net = lasagne.layers.Conv2DLayer(network, num_filters=4, filter_size=(1, 1))
+        policy_net = lasagne.layers.Conv2DLayer(network, num_filters=8, filter_size=(1, 1))
         self.policy_net = lasagne.layers.DenseLayer(policy_net, num_units=self.n * self.n,
                                                     nonlinearity=lasagne.nonlinearities.softmax)
         # state value layers
-        value_net = lasagne.layers.Conv2DLayer(network, num_filters=2, filter_size=(1, 1))
-        value_net = lasagne.layers.DenseLayer(value_net, num_units=64)
+        value_net = lasagne.layers.Conv2DLayer(network, num_filters=4, filter_size=(1, 1))
+        value_net = lasagne.layers.DenseLayer(value_net, num_units=128)
         self.value_net = lasagne.layers.DenseLayer(value_net, num_units=1, nonlinearity=lasagne.nonlinearities.tanh)
         # get action probabilities and state score value
         self.action_probabilities, self.value = lasagne.layers.get_output([self.policy_net, self.value_net])
