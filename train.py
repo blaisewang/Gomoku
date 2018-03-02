@@ -168,10 +168,11 @@ class TrainPipeline:
                         self.best_win_ratio = win_ratio
                         pickle.dump(net_params, open('best_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
                         if self.best_win_ratio >= 0.8:
-                            self.best_win_ratio = 0.0
-                            self.pure_mcts_play_out_number += 1000
                             print_log("New best policy defeated " + str(
                                 self.pure_mcts_play_out_number) + " play out MCTS player ")
+                            self.best_win_ratio = 0.0
+                            self.pure_mcts_play_out_number += 1000
+
         except KeyboardInterrupt:
             pass
 
