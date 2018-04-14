@@ -49,9 +49,7 @@ class Board:
     def get_current_state(self):
         player = self.get_current_player()
         black_list, white_list = evaluate.get_state(self.chess)
-        length = len(black_list) >> 1
         square_state = np.zeros((4, self.n, self.n))
-        n = (self.n - 3) >> 1
         for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
             if value == 1 or value == 2:
                 square_state[0][self.n - x - 1][y] = 1.0
@@ -59,9 +57,9 @@ class Board:
             square_state[1 if player == 1 else 2][self.n - 1] = np.repeat(1, self.n)
         elif white_list[0] > 0:
             square_state[2 if player == 1 else 1][self.n - 1] = np.repeat(1, self.n)
-        for i in range(1, length + 1):
-            square_state[1 if player == 1 else 2][self.n - i - 1] = to_list(black_list, n, i)
-            square_state[2 if player == 1 else 1][self.n - i - 1] = to_list(white_list, n, i)
+        for i in range(1, (len(black_list) >> 1) + 1):
+            square_state[1 if player == 1 else 2][self.n - i - 1] = to_list(black_list, self.n, i)
+            square_state[2 if player == 1 else 1][self.n - i - 1] = to_list(white_list, self.n, i)
         if self.get_move_number() > 0:
             x, y = self.move_list[self.get_move_number() - 1]
             square_state[3][self.n - x - 1][y] = 1.0
@@ -86,14 +84,14 @@ class Board:
         return 1 if self.get_move_number() % 2 == 0 else 2
 
     def has_winner(self, x: int, y: int):
-        if evaluate.has_winner(self.chess, x + 4, y + 4):
-            self.winner = 2 if self.get_current_player() == 1 else 1
+        if evaluate.has_winner(self.chess, x, y):
+            self.winner = self.chess[x, y]
 
     def has_ended(self):
         if self.get_move_number() == 0:
             return False, -1
         x, y = self.move_list[self.get_move_number() - 1]
-        self.has_winner(x, y)
+        self.has_winner(x + 4, y + 4)
         if self.winner != 0:
             return True, self.winner
         else:
