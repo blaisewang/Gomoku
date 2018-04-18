@@ -11,14 +11,13 @@ from policy_value_net import PolicyValueNet
 
 WIN_WIDTH = 1024
 WIN_HEIGHT = 720
-BLOCK_LENGTH = 42
 HEIGHT_OFFSET = 50
 BANNER_WIDTH = 300
 BANNER_HEIGHT = 100
 BUTTON_WIDTH = 150
 BUTTON_HEIGHT = 32
 STANDARD_LENGTH = 15
-ROW_LIST_MARGIN = 40
+ROW_LIST_MARGIN = -40
 COLUMN_LIST_MARGIN = 25
 BUTTON_WIDTH_MARGIN = 6
 BUTTON_HEIGHT_MARGIN = 45
@@ -31,7 +30,8 @@ class GomokuFrame(wx.Frame):
     is_banner_displayed = False
     is_analysis_displayed = False
 
-    piece_radius = (BLOCK_LENGTH >> 1) - 3
+    block_length = int((WIN_HEIGHT - 90) / STANDARD_LENGTH)
+    piece_radius = (block_length >> 1) - 3
     inner_circle_radius = piece_radius - 4
     half_button_width = (BUTTON_WIDTH - BUTTON_WIDTH_MARGIN) / 2
 
@@ -50,18 +50,18 @@ class GomokuFrame(wx.Frame):
         self.thread = threading.Thread()
         self.row_name_list = self.row_name_list[STANDARD_LENGTH - n: STANDARD_LENGTH]
         self.column_name_list = self.column_name_list[0:n]
-        self.grid_length = BLOCK_LENGTH * (n - 1)
+        self.grid_length = self.block_length * (n - 1)
         self.grid_position_x = (WIN_WIDTH - self.grid_length) / 2 + 15
         self.grid_position_y = (WIN_HEIGHT - self.grid_length - HEIGHT_OFFSET) / 2
-        self.button_position_x = (self.grid_position_x - ROW_LIST_MARGIN - BUTTON_WIDTH) / 2
+        self.button_position_x = (self.grid_position_x + ROW_LIST_MARGIN - BUTTON_WIDTH) / 2
         self.second_button_position_x = self.button_position_x + self.half_button_width + BUTTON_WIDTH_MARGIN
 
-        for i in range(0, self.grid_length + 1, BLOCK_LENGTH):
+        for i in range(0, self.grid_length + 1, self.block_length):
             self.line_list.append((i + self.grid_position_x, self.grid_position_y, i + self.grid_position_x,
                                    self.grid_position_y + self.grid_length - 1))
             self.line_list.append((self.grid_position_x, i + self.grid_position_y,
                                    self.grid_position_x + self.grid_length - 1, i + self.grid_position_y))
-            self.row_list.append((self.grid_position_x - ROW_LIST_MARGIN, i + self.grid_position_y - 8))
+            self.row_list.append((self.grid_position_x + ROW_LIST_MARGIN, i + self.grid_position_y - 8))
             self.column_list.append(
                 (i + self.grid_position_x, self.grid_position_y + self.grid_length + COLUMN_LIST_MARGIN))
 
@@ -86,7 +86,7 @@ class GomokuFrame(wx.Frame):
                                           self.second_button_position_x,
                                           self.grid_position_y + 2 * BUTTON_HEIGHT_MARGIN),
                                       size=(self.half_button_width, BUTTON_HEIGHT))
-        self.ai_hint_button = wx.Button(self, label="AI Hint",
+        self.ai_hint_button = wx.Button(self, label="Hint",
                                         pos=(self.button_position_x, self.grid_position_y + 3 * BUTTON_HEIGHT_MARGIN),
                                         size=(BUTTON_WIDTH, BUTTON_HEIGHT))
         self.analysis_button = wx.Button(self, label="Analysis",
@@ -243,8 +243,8 @@ class GomokuFrame(wx.Frame):
         dc = wx.ClientDC(self)
         dc.SetPen(wx.Pen(wx.WHITE))
         dc.SetBrush(wx.Brush(wx.WHITE))
-        dc.DrawRectangle(self.grid_position_x - BLOCK_LENGTH, self.grid_position_y - BLOCK_LENGTH,
-                         self.grid_length + BLOCK_LENGTH * 2, self.grid_length + BLOCK_LENGTH * 2)
+        dc.DrawRectangle(self.grid_position_x - self.block_length, self.grid_position_y - self.block_length,
+                         self.grid_length + self.block_length * 2, self.grid_length + self.block_length * 2)
         dc.SetPen(wx.Pen(wx.BLACK, width=2))
         dc.DrawLineList(self.line_list)
         dc.SetFont(wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, False))
@@ -252,13 +252,16 @@ class GomokuFrame(wx.Frame):
         dc.DrawTextList(self.column_name_list, self.column_list)
         dc.SetBrush(wx.Brush(wx.BLACK))
         if self.n % 2 == 1:
-            dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * (self.n >> 1),
-                          self.grid_position_y + BLOCK_LENGTH * (self.n >> 1), 4)
+            dc.DrawCircle(self.grid_position_x + self.block_length * (self.n >> 1),
+                          self.grid_position_y + self.block_length * (self.n >> 1), 4)
         if self.n == STANDARD_LENGTH:
-            dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 3, self.grid_position_y + BLOCK_LENGTH * 3, 4)
-            dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 3, self.grid_position_y + BLOCK_LENGTH * 11, 4)
-            dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 11, self.grid_position_y + BLOCK_LENGTH * 3, 4)
-            dc.DrawCircle(self.grid_position_x + BLOCK_LENGTH * 11, self.grid_position_y + BLOCK_LENGTH * 11, 4)
+            dc.DrawCircle(self.grid_position_x + self.block_length * 3, self.grid_position_y + self.block_length * 3, 4)
+            dc.DrawCircle(self.grid_position_x + self.block_length * 3, self.grid_position_y + self.block_length * 11,
+                          4)
+            dc.DrawCircle(self.grid_position_x + self.block_length * 11, self.grid_position_y + self.block_length * 3,
+                          4)
+            dc.DrawCircle(self.grid_position_x + self.block_length * 11, self.grid_position_y + self.block_length * 11,
+                          4)
 
     def draw_possible_moves(self, possible_move):
         dc = wx.ClientDC(self)
@@ -266,7 +269,7 @@ class GomokuFrame(wx.Frame):
             y, x = self.board.move_to_location(move)
             dc.SetBrush(wx.Brush(wx.Colour(28, 164, 252, alpha=14 if int(p * 230) < 14 else int(p * 230))))
             dc.SetPen(wx.Pen(wx.Colour(28, 164, 252, alpha=230)))
-            dc.DrawCircle(self.grid_position_x + x * BLOCK_LENGTH, self.grid_position_y + y * BLOCK_LENGTH,
+            dc.DrawCircle(self.grid_position_x + x * self.block_length, self.grid_position_y + y * self.block_length,
                           self.piece_radius)
 
     def draw_chess(self):
@@ -275,12 +278,12 @@ class GomokuFrame(wx.Frame):
         for x, y in np.ndindex(self.board.chess[4:self.n + 4, 4:self.n + 4].shape):
             if self.board.chess[y + 4, x + 4] > 0:
                 dc.SetBrush(wx.Brush(wx.BLACK if self.board.chess[y + 4, x + 4] == 1 else wx.WHITE))
-                dc.DrawCircle(self.grid_position_x + x * BLOCK_LENGTH,
-                              self.grid_position_y + y * BLOCK_LENGTH, self.piece_radius)
+                dc.DrawCircle(self.grid_position_x + x * self.block_length,
+                              self.grid_position_y + y * self.block_length, self.piece_radius)
         if self.current_move > 0:
             x, y = self.chess_record[self.current_move - 1]
-            x = self.grid_position_x + x * BLOCK_LENGTH
-            y = self.grid_position_y + y * BLOCK_LENGTH
+            x = self.grid_position_x + x * self.block_length
+            y = self.grid_position_y + y * self.block_length
             dc.SetBrush(wx.Brush(wx.BLACK if self.current_move % 2 == 1 else wx.WHITE))
             dc.SetPen(wx.Pen(wx.WHITE if self.current_move % 2 == 1 else wx.BLACK))
             dc.DrawCircle(x, y, self.inner_circle_radius)
@@ -329,11 +332,11 @@ class GomokuFrame(wx.Frame):
                 if self.is_analysis_displayed:
                     self.repaint_board()
                 x, y = e.GetPosition()
-                x = x - self.grid_position_x + BLOCK_LENGTH / 2
-                y = y - self.grid_position_y + BLOCK_LENGTH / 2
+                x = x - self.grid_position_x + (self.block_length >> 1)
+                y = y - self.grid_position_y + (self.block_length >> 1)
                 if x > 0 and y > 0:
-                    x = int(x / BLOCK_LENGTH)
-                    y = int(y / BLOCK_LENGTH)
+                    x = int(x / self.block_length)
+                    y = int(y / self.block_length)
                     if 0 <= x < self.n and 0 <= y < self.n:
                         if self.board.chess[y + 4, x + 4] == 0:
                             if self.mcts_player is not None:
