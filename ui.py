@@ -33,7 +33,7 @@ class GomokuFrame(wx.Frame):
     block_length = int((WIN_HEIGHT - 90) / STANDARD_LENGTH)
     piece_radius = (block_length >> 1) - 3
     inner_circle_radius = piece_radius - 4
-    half_button_width = (BUTTON_WIDTH - BUTTON_WIDTH_MARGIN) / 2
+    half_button_width = (BUTTON_WIDTH - BUTTON_WIDTH_MARGIN) >> 1
 
     mcts_player = None
 
@@ -51,9 +51,9 @@ class GomokuFrame(wx.Frame):
         self.row_name_list = self.row_name_list[STANDARD_LENGTH - n: STANDARD_LENGTH]
         self.column_name_list = self.column_name_list[0:n]
         self.grid_length = self.block_length * (n - 1)
-        self.grid_position_x = (WIN_WIDTH - self.grid_length) / 2 + 15
-        self.grid_position_y = (WIN_HEIGHT - self.grid_length - HEIGHT_OFFSET) / 2
-        self.button_position_x = (self.grid_position_x + ROW_LIST_MARGIN - BUTTON_WIDTH) / 2
+        self.grid_position_x = ((WIN_WIDTH - self.grid_length) >> 1) + 15
+        self.grid_position_y = (WIN_HEIGHT - self.grid_length - HEIGHT_OFFSET) >> 1
+        self.button_position_x = (self.grid_position_x + ROW_LIST_MARGIN - BUTTON_WIDTH) >> 1
         self.second_button_position_x = self.button_position_x + self.half_button_width + BUTTON_WIDTH_MARGIN
 
         for i in range(0, self.grid_length + 1, self.block_length):
@@ -66,15 +66,15 @@ class GomokuFrame(wx.Frame):
                 (i + self.grid_position_x, self.grid_position_y + self.grid_length + COLUMN_LIST_MARGIN))
 
         wx.Frame.__init__(self, None, title="Gomoku Zero",
-                          pos=((wx.DisplaySize()[0] - WIN_WIDTH) / 2, (wx.DisplaySize()[1] - WIN_HEIGHT) / 2.5),
+                          pos=((wx.DisplaySize()[0] - WIN_WIDTH) >> 1, (wx.DisplaySize()[1] - WIN_HEIGHT) / 2.5),
                           size=(WIN_WIDTH, WIN_HEIGHT), style=wx.CLOSE_BOX)
         button_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, False)
         image_font = wx.Font(25, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, False)
-        self.back_button = wx.Button(self, label="Back", pos=(self.button_position_x, self.grid_position_y),
+        self.undo_button = wx.Button(self, label="Undo", pos=(self.button_position_x, self.grid_position_y),
                                      size=(self.half_button_width, BUTTON_HEIGHT))
-        self.forward_button = wx.Button(self, label="Forward",
-                                        pos=(self.second_button_position_x, self.grid_position_y),
-                                        size=(self.half_button_width, BUTTON_HEIGHT))
+        self.redo_button = wx.Button(self, label="Redo",
+                                     pos=(self.second_button_position_x, self.grid_position_y),
+                                     size=(self.half_button_width, BUTTON_HEIGHT))
         self.replay_button = wx.Button(self, label="Replay",
                                        pos=(self.button_position_x, self.grid_position_y + BUTTON_HEIGHT_MARGIN),
                                        size=(BUTTON_WIDTH, BUTTON_HEIGHT))
@@ -92,15 +92,15 @@ class GomokuFrame(wx.Frame):
         self.analysis_button = wx.Button(self, label="Analysis",
                                          pos=(self.button_position_x, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN),
                                          size=(BUTTON_WIDTH, BUTTON_HEIGHT))
-        self.back_button.SetFont(button_font)
-        self.forward_button.SetFont(button_font)
+        self.undo_button.SetFont(button_font)
+        self.redo_button.SetFont(button_font)
         self.replay_button.SetFont(button_font)
         self.ai_hint_button.SetFont(button_font)
         self.analysis_button.SetFont(button_font)
         self.black_button.SetFont(image_font)
         self.white_button.SetFont(image_font)
-        self.back_button.Disable()
-        self.forward_button.Disable()
+        self.undo_button.Disable()
+        self.redo_button.Disable()
         self.replay_button.Disable()
         try:
             policy_param = pickle.load(open('best_policy.model', 'rb'), encoding='bytes')
@@ -117,7 +117,7 @@ class GomokuFrame(wx.Frame):
             self.analysis_button.Disable()
         self.initialize_user_interface()
 
-    def on_back_button_click(self, _):
+    def on_undo_button_click(self, _):
         if not self.thread.is_alive():
             self.current_move -= 1
             self.board.winner = 0
@@ -125,16 +125,16 @@ class GomokuFrame(wx.Frame):
             if self.has_set_ai_player and (self.board.winner == 0 or self.board.get_move_number() < self.n * self.n):
                 self.current_move -= 1
                 self.board.remove_move()
-            self.forward_button.Enable()
+            self.redo_button.Enable()
             self.repaint_board()
             if self.current_move == 0:
-                self.back_button.Disable()
+                self.undo_button.Disable()
                 self.replay_button.Disable()
             if self.mcts_player is not None:
                 self.ai_hint_button.Enable()
                 self.analysis_button.Enable()
 
-    def on_forward_button_click(self, _):
+    def on_redo_button_click(self, _):
         if not self.thread.is_alive():
             x, y = self.chess_record[self.current_move]
             self.current_move += 1
@@ -143,11 +143,11 @@ class GomokuFrame(wx.Frame):
                 x, y = self.chess_record[self.current_move]
                 self.current_move += 1
                 self.board.add_move(y, x)
-            self.back_button.Enable()
+            self.undo_button.Enable()
             self.replay_button.Enable()
             self.repaint_board()
             if self.current_move == self.moves:
-                self.forward_button.Disable()
+                self.redo_button.Disable()
             if self.current_move == self.n * self.n:
                 self.ai_hint_button.Disable()
             if self.mcts_player is not None:
@@ -161,8 +161,8 @@ class GomokuFrame(wx.Frame):
             self.has_set_ai_player = False
             self.chess_record.clear()
             self.draw_board()
-            self.back_button.Disable()
-            self.forward_button.Disable()
+            self.undo_button.Disable()
+            self.redo_button.Disable()
             self.replay_button.Disable()
             if self.mcts_player is not None:
                 self.black_button.Enable()
@@ -223,8 +223,8 @@ class GomokuFrame(wx.Frame):
         self.board = Board(self.n)
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_LEFT_UP, self.on_click)
-        self.Bind(wx.EVT_BUTTON, self.on_back_button_click, self.back_button)
-        self.Bind(wx.EVT_BUTTON, self.on_forward_button_click, self.forward_button)
+        self.Bind(wx.EVT_BUTTON, self.on_undo_button_click, self.undo_button)
+        self.Bind(wx.EVT_BUTTON, self.on_redo_button_click, self.redo_button)
         self.Bind(wx.EVT_BUTTON, self.on_replay_button_click, self.replay_button)
         self.Bind(wx.EVT_BUTTON, self.on_black_button_click, self.black_button)
         self.Bind(wx.EVT_BUTTON, self.on_white_button_click, self.white_button)
@@ -290,12 +290,12 @@ class GomokuFrame(wx.Frame):
 
     def draw_move(self, x: int, y: int) -> bool:
         if self.current_move == 0:
-            self.back_button.Enable()
+            self.undo_button.Enable()
             self.replay_button.Enable()
         if self.current_move != self.moves:
             for i in range(self.current_move, self.moves):
                 self.chess_record.pop()
-            self.forward_button.Disable()
+            self.redo_button.Disable()
         self.current_move += 1
         self.moves = self.current_move
         self.chess_record.append((x, y))
@@ -309,21 +309,21 @@ class GomokuFrame(wx.Frame):
         return False
 
     def draw_banner(self, result: int):
-        x = (WIN_WIDTH - 216) / 2 + 16
+        x = ((WIN_WIDTH - 216) >> 1) + 16
         if result == 1:
             string = "BLACK WIN"
         elif result == 2:
             string = "WHITE WIN"
         else:
             string = "DRAW"
-            x = (WIN_WIDTH - 97) / 2 + 16
+            x = ((WIN_WIDTH - 97) >> 1) + 16
         dc = wx.ClientDC(self)
         dc.SetBrush(wx.Brush(wx.WHITE))
-        dc.DrawRectangle((WIN_WIDTH - BANNER_WIDTH) / 2 + 15, (WIN_HEIGHT - BANNER_HEIGHT) / 2 - HEIGHT_OFFSET + 5,
-                         BANNER_WIDTH, BANNER_HEIGHT)
+        dc.DrawRectangle(((WIN_WIDTH - BANNER_WIDTH) >> 1) + 15,
+                         ((WIN_HEIGHT - BANNER_HEIGHT) >> 1) - HEIGHT_OFFSET + 5, BANNER_WIDTH, BANNER_HEIGHT)
         dc.SetPen(wx.Pen(wx.BLACK))
         dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, False))
-        dc.DrawText(string, x, (WIN_HEIGHT - 26) / 2 - HEIGHT_OFFSET)
+        dc.DrawText(string, x, ((WIN_HEIGHT - 26) >> 1) - HEIGHT_OFFSET)
         self.is_banner_displayed = True
 
     def on_click(self, e):
