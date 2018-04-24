@@ -309,21 +309,22 @@ class GomokuFrame(wx.Frame):
         return False
 
     def draw_banner(self, result: int):
-        x = ((WIN_WIDTH - 216) >> 1) + 16
+        w = 216
         if result == 1:
             string = "BLACK WIN"
         elif result == 2:
             string = "WHITE WIN"
         else:
             string = "DRAW"
-            x = ((WIN_WIDTH - 97) >> 1) + 16
+            w = 97
+        x = (self.grid_position_x + ((self.grid_length - w) >> 1))
         dc = wx.ClientDC(self)
         dc.SetBrush(wx.Brush(wx.WHITE))
-        dc.DrawRectangle(((WIN_WIDTH - BANNER_WIDTH) >> 1) + 15,
-                         ((WIN_HEIGHT - BANNER_HEIGHT) >> 1) - HEIGHT_OFFSET + 5, BANNER_WIDTH, BANNER_HEIGHT)
+        dc.DrawRectangle(self.grid_position_x + ((self.grid_length - BANNER_WIDTH) >> 1),
+                         self.grid_position_y + ((self.grid_length - BANNER_HEIGHT) >> 1), BANNER_WIDTH, BANNER_HEIGHT)
         dc.SetPen(wx.Pen(wx.BLACK))
         dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, False))
-        dc.DrawText(string, x, ((WIN_HEIGHT - 26) >> 1) - HEIGHT_OFFSET)
+        dc.DrawText(string, x, (self.grid_position_y + ((self.grid_length - 40) >> 1)))
         self.is_banner_displayed = True
 
     def on_click(self, e):
