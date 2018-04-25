@@ -292,9 +292,8 @@ class GomokuFrame(wx.Frame):
         if self.current_move == 0:
             self.undo_button.Enable()
             self.replay_button.Enable()
-        if self.current_move != self.moves:
-            for i in range(self.current_move, self.moves):
-                self.chess_record.pop()
+        for _ in range(self.current_move, self.moves):
+            self.chess_record.pop()
             self.redo_button.Disable()
         self.current_move += 1
         self.moves = self.current_move
