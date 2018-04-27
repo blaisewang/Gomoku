@@ -1,5 +1,8 @@
 """
+An implementation of the policyValueNet in Theano and Lasagne
+
 @author: Junxiao Song
+modified by: Xudong Wang
 """
 
 import lasagne

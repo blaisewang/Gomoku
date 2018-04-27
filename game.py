@@ -1,3 +1,9 @@
+"""
+An implementation of the game and the game board
+
+@author: Xudong Wang
+"""
+
 import numpy as np
 
 import evaluate

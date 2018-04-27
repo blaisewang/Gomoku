@@ -1,3 +1,9 @@
+"""
+An implementation of the game interface
+
+@author: Xudong Wang
+"""
+
 import copy
 import pickle
 import threading

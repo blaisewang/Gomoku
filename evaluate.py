@@ -1,3 +1,9 @@
+"""
+An implementation of the pattern recognition
+
+@author: Xudong Wang
+"""
+
 import numpy as np
 
 

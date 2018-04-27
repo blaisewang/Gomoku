@@ -1,3 +1,11 @@
+"""
+An implementation of the Monte Carlo tree node
+
+
+@author: Junxiao Song
+modified by: Xudong Wang
+"""
+
 import numpy as np
 
 

@@ -2,7 +2,9 @@
 A pure implementation of the Monte Carlo Tree Search (MCTS)
 
 @author: Junxiao Song
+modified by: Xudong Wang
 """
+
 import copy
 from operator import itemgetter
 

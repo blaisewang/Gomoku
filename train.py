@@ -2,6 +2,7 @@
 An implementation of the training pipeline of AlphaZero for Gomoku
 
 @author: Junxiao Song
+modified by: Xudong Wang
 """
 
 from collections import defaultdict, deque
